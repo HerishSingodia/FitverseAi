@@ -1,0 +1,65 @@
+{# templates/_nav_auth.html — user auth widget for navbar #}
+{% if session.get('user_email') %}
+  {# Fetch user from session — routes pass `current_user()` in context or we use g #}
+  <li class="nav-item ms-2">
+    <div class="dropdown">
+      <button class="btn p-0 border-0 d-flex align-items-center gap-2" data-bs-toggle="dropdown" aria-expanded="false">
+        <div class="nav-avatar" id="navAvatarBadge" style="background:#6366f1">
+          <span id="navAvatarInitials">?</span>
+        </div>
+        <span class="d-none d-lg-inline text-muted-custom small" id="navUserFirstName">Account</span>
+        <i class="bi bi-chevron-down text-muted-custom" style="font-size:0.7rem"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end nav-dropdown">
+        <li>
+          <div class="nav-dropdown-header" id="navDropdownHeader">
+            <div class="nav-avatar-lg" id="navAvatarLg" style="background:#6366f1">?</div>
+            <div>
+              <div class="fw-semibold" id="navDropdownName">Loading…</div>
+              <div class="small text-muted-custom" id="navDropdownEmail"></div>
+            </div>
+          </div>
+        </li>
+        <li><hr class="dropdown-divider" style="border-color:rgba(255,255,255,0.08)"></li>
+        <li><a class="dropdown-item nav-dropdown-item" href="/profile"><i class="bi bi-person me-2"></i>My Profile</a></li>
+        <li><a class="dropdown-item nav-dropdown-item" href="/dashboard"><i class="bi bi-grid me-2"></i>Dashboard</a></li>
+        <li><hr class="dropdown-divider" style="border-color:rgba(255,255,255,0.08)"></li>
+        <li><a class="dropdown-item nav-dropdown-item text-danger-custom" href="/logout"><i class="bi bi-box-arrow-right me-2"></i>Sign Out</a></li>
+      </ul>
+    </div>
+  </li>
+{% else %}
+  <li class="nav-item ms-1">
+    <a class="btn btn-glass btn-sm px-3" href="/login">
+      <i class="bi bi-box-arrow-in-right me-1"></i>Login
+    </a>
+  </li>
+  <li class="nav-item ms-1">
+    <a class="btn btn-gradient-primary btn-sm px-3" href="/register">
+      <i class="bi bi-person-plus me-1"></i>Sign Up
+    </a>
+  </li>
+{% endif %}
+<script>
+(function() {
+  // Hydrate nav avatar from /api/me
+  fetch('/api/me').then(r => r.json()).then(d => {
+    if (!d.logged_in) return;
+    const els = {
+      badge:     document.getElementById('navAvatarBadge'),
+      initials:  document.getElementById('navAvatarInitials'),
+      firstName: document.getElementById('navUserFirstName'),
+      header:    document.getElementById('navDropdownHeader'),
+      avatarLg:  document.getElementById('navAvatarLg'),
+      name:      document.getElementById('navDropdownName'),
+      email:     document.getElementById('navDropdownEmail'),
+    };
+    if (els.badge)    els.badge.style.background = d.avatar_color;
+    if (els.initials) els.initials.textContent = d.initials;
+    if (els.firstName) els.firstName.textContent = d.name.split(' ')[0];
+    if (els.avatarLg) { els.avatarLg.textContent = d.initials; els.avatarLg.style.background = d.avatar_color; }
+    if (els.name)  els.name.textContent  = d.name;
+    if (els.email) els.email.textContent = d.email;
+  }).catch(() => {});
+})();
+</script>

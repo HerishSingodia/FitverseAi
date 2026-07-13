@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — FitVerse AI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+</head>
+<body class="fitverse-body">
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark fitverse-nav sticky-top">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand brand-logo" href="/">
+        <span class="brand-icon"><i class="fas fa-dumbbell"></i></span>
+        FitVerse <span class="brand-ai">AI</span>
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+          <li class="nav-item"><a class="nav-link nav-pill" href="/"><i class="bi bi-house-door me-1"></i>Home</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill active" href="/dashboard"><i class="bi bi-grid me-1"></i>Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/nutrition"><i class="bi bi-apple me-1"></i>Nutrition</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/meals"><i class="bi bi-egg-fried me-1"></i>Meal Plans</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/workout"><i class="fas fa-dumbbell me-1"></i>Workouts</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/bmi"><i class="bi bi-graph-up-arrow me-1"></i>BMI</a></li>
+          {% include '_nav_auth.html' %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="container-fluid px-4">
+      <div class="dash-hero">
+        <img src="https://images.pexels.com/photos/2247179/pexels-photo-2247179.jpeg?auto=compress&cs=tinysrgb&w=1400&h=400&dpr=1" alt="Wellness journey" loading="lazy" />
+        <div class="dash-hero-overlay">
+          <h1 class="page-title mb-1"><i class="bi bi-grid-fill me-2 text-primary-custom"></i>Dashboard</h1>
+          <p class="page-sub text-muted-custom mb-0">Your wellness command center · IBM Granite AI</p>
+          <span class="badge-live mt-3"><span class="status-dot"></span>AI Online</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid px-4 pb-5">
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+      {% for icon, label, val, unit, trend, color in [
+        ('bi bi-fire','Calories Today','1,847','kcal','+12%','#f59e0b'),
+        ('bi bi-droplet-fill','Water Intake','2.1','L','+5%','#06b6d4'),
+        ('bi bi-lightning-charge-fill','Protein','128','g','On track','#10b981'),
+        ('bi bi-heart-pulse-fill','Active Streak','14','days','🔥 New record!','#ef4444'),
+      ] %}
+      <div class="col-6 col-lg-3">
+        <div class="kpi-card glass-card">
+          <div class="kpi-icon" style="--icon-color:{{ color }}"><i class="{{ icon }}"></i></div>
+          <div class="kpi-val">{{ val }}<span class="kpi-unit">{{ unit }}</span></div>
+          <div class="kpi-label">{{ label }}</div>
+          <div class="kpi-trend" style="color:{{ color }}">{{ trend }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Charts + AI Chat Row -->
+    <div class="row g-3 mb-4">
+      <!-- Calorie Chart -->
+      <div class="col-lg-4">
+        <div class="glass-card h-100">
+          <div class="card-section-header">
+            <i class="bi bi-pie-chart-fill text-warning me-2"></i>Today's Macros
+          </div>
+          <div class="chart-wrap d-flex justify-content-center align-items-center" style="height:200px">
+            <canvas id="macroChart"></canvas>
+          </div>
+          <div class="macro-legend mt-3">
+            <div class="macro-item"><span class="dot" style="background:#6366f1"></span>Protein 128g</div>
+            <div class="macro-item"><span class="dot" style="background:#f59e0b"></span>Carbs 203g</div>
+            <div class="macro-item"><span class="dot" style="background:#10b981"></span>Fats 58g</div>
+          </div>
+        </div>
+      </div>
+      <!-- Weekly Calories Chart -->
+      <div class="col-lg-4">
+        <div class="glass-card h-100">
+          <div class="card-section-header">
+            <i class="bi bi-bar-chart-fill text-primary-custom me-2"></i>Weekly Calories
+          </div>
+          <div style="height:200px">
+            <canvas id="weeklyChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <!-- AI Chat -->
+      <div class="col-lg-4">
+        <div class="glass-card h-100 d-flex flex-column" style="min-height:320px">
+          <div class="card-section-header">
+            <i class="bi bi-robot me-2 text-primary-custom"></i>AI Coach
+            <span class="ms-auto status-dot"></span>
+          </div>
+          <div class="chat-body flex-grow-1" id="dashChatMsgs" style="max-height:230px">
+            <div class="chat-msg ai-msg">
+              <div class="msg-bubble small">👋 How can I help your wellness journey today?</div>
+            </div>
+          </div>
+          <div class="chat-input-row mt-2">
+            <input type="text" id="dashChatInput" class="form-control chat-input"
+                   placeholder="Ask AI anything…"
+                   onkeydown="if(event.key==='Enter') dashChat()" />
+            <button class="btn btn-gradient-primary btn-sm" onclick="dashChat()">
+              <i class="bi bi-send-fill"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress + Workout Row -->
+    <div class="row g-3 mb-4">
+      <!-- Goals Progress -->
+      <div class="col-lg-6">
+        <div class="glass-card">
+          <div class="card-section-header mb-3">
+            <i class="bi bi-bullseye me-2 text-success-custom"></i>Weekly Goals
+          </div>
+          {% for goal, pct, color in [
+            ('Calorie Goal (14,000 kcal)', 82, '#6366f1'),
+            ('Water Intake (14 L)', 75, '#06b6d4'),
+            ('Protein Goal (896 g)', 68, '#10b981'),
+            ('Workout Sessions (5)', 80, '#f59e0b'),
+          ] %}
+          <div class="goal-item mb-3">
+            <div class="d-flex justify-content-between small mb-1">
+              <span class="text-muted-custom">{{ goal }}</span>
+              <span class="fw-semibold" style="color:{{ color }}">{{ pct }}%</span>
+            </div>
+            <div class="progress progress-slim">
+              <div class="progress-bar" style="width:{{ pct }}%; background:{{ color }}; border-radius:4px"></div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <!-- Workout Generator -->
+      <div class="col-lg-6">
+        <div class="glass-card">
+          <div class="card-section-header mb-3">
+            <i class="bi bi-lightning-charge-fill text-warning me-2"></i>AI Workout Generator
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <select id="wLevel" class="form-select form-select-dark">
+                <option value="beginner">Beginner</option>
+                <option value="intermediate" selected>Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <select id="wGoal" class="form-select form-select-dark">
+                <option value="weight loss">Weight Loss</option>
+                <option value="muscle gain" selected>Muscle Gain</option>
+                <option value="endurance">Endurance</option>
+                <option value="flexibility">Flexibility</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <select id="wDays" class="form-select form-select-dark">
+                <option value="3">3 days/week</option>
+                <option value="4" selected>4 days/week</option>
+                <option value="5">5 days/week</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <button class="btn btn-gradient-primary w-100" onclick="generateWorkout()">
+                <i class="bi bi-stars me-1"></i>Generate
+              </button>
+            </div>
+          </div>
+          <div id="workoutResult" class="result-box" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-3">
+      {% for href, icon, label, color, photo in [
+        ('/nutrition','bi bi-apple','Analyze Food','#10b981','https://images.pexels.com/photos/6740849/pexels-photo-6740849.jpeg?auto=compress&cs=tinysrgb&w=400&h=200&dpr=1'),
+        ('/meals','bi bi-calendar3','Meal Plan','#f59e0b','https://images.pexels.com/photos/9213886/pexels-photo-9213886.jpeg?auto=compress&cs=tinysrgb&w=400&h=200&dpr=1'),
+        ('/bmi','bi bi-activity','BMI Check','#6366f1','https://images.pexels.com/photos/53404/pexels-photo-53404.jpeg?auto=compress&cs=tinysrgb&w=400&h=200&dpr=1'),
+        ('/dashboard','bi bi-bar-chart','Progress','#ef4444','https://images.pexels.com/photos/5103671/pexels-photo-5103671.jpeg?auto=compress&cs=tinysrgb&w=400&h=200&dpr=1'),
+      ] %}
+      <div class="col-6 col-lg-3">
+        <a href="{{ href }}" class="quick-action glass-card text-center d-block text-decoration-none">
+          <div class="qa-img-wrap">
+            <img src="{{ photo }}" alt="{{ label }}" loading="lazy" />
+          </div>
+          <div class="qa-icon" style="--icon-color:{{ color }}"><i class="{{ icon }}"></i></div>
+          <div class="qa-label">{{ label }}</div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+    // Macro Donut Chart
+    new Chart(document.getElementById('macroChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Protein', 'Carbs', 'Fats'],
+        datasets: [{ data: [128, 203, 58], backgroundColor: ['#6366f1','#f59e0b','#10b981'], borderWidth: 0, hoverOffset: 6 }]
+      },
+      options: { cutout: '70%', plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: false }
+    });
+
+    // Weekly Bar Chart
+    new Chart(document.getElementById('weeklyChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+        datasets: [{
+          label: 'Calories',
+          data: [1920, 2100, 1850, 2200, 1780, 2400, 1847],
+          backgroundColor: 'rgba(99,102,241,0.7)',
+          borderRadius: 6, borderSkipped: false
+        }, {
+          label: 'Goal',
+          data: [2000,2000,2000,2000,2000,2000,2000],
+          type: 'line',
+          borderColor: '#f59e0b',
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: false,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+        },
+        plugins: { legend: { labels: { color: '#94a3b8' } } }
+      }
+    });
+
+    async function dashChat() {
+      const input = document.getElementById('dashChatInput');
+      const msg = input.value.trim(); if (!msg) return;
+      const box = document.getElementById('dashChatMsgs');
+      box.innerHTML += `<div class="chat-msg user-msg"><div class="msg-bubble small">${msg}</div></div>`;
+      input.value = '';
+      box.innerHTML += `<div id="dt" class="chat-msg ai-msg"><div class="msg-bubble small typing-indicator"><span></span><span></span><span></span></div></div>`;
+      box.scrollTop = box.scrollHeight;
+      const res = await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
+      const data = await res.json();
+      document.getElementById('dt')?.remove();
+      box.innerHTML += `<div class="chat-msg ai-msg"><div class="msg-bubble small">${(data.response||'').replace(/\n/g,'<br/>')}</div></div>`;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function generateWorkout() {
+      const btn = document.querySelector('button[onclick="generateWorkout()"]');
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generating…';
+      btn.disabled = true;
+      const res = await fetch('/api/workout-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({level:document.getElementById('wLevel').value,goal:document.getElementById('wGoal').value,days:document.getElementById('wDays').value})});
+      const data = await res.json();
+      const el = document.getElementById('workoutResult');
+      el.style.display='block';
+      el.innerHTML = (data.plan||'').replace(/\n/g,'<br/>');
+      btn.innerHTML = '<i class="bi bi-stars me-1"></i>Generate';
+      btn.disabled = false;
+    }
+  </script>
+</body>
+</html>

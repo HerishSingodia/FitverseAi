@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workouts — FitVerse AI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+</head>
+<body class="fitverse-body">
+
+  <!-- ── Navbar ────────────────────────────────────────────── -->
+  <nav class="navbar navbar-expand-lg navbar-dark fitverse-nav sticky-top">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand brand-logo" href="/">
+        <span class="brand-icon"><i class="fas fa-dumbbell"></i></span>
+        FitVerse <span class="brand-ai">AI</span>
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+          <li class="nav-item"><a class="nav-link nav-pill" href="/"><i class="bi bi-house-door me-1"></i>Home</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/dashboard"><i class="bi bi-grid me-1"></i>Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/nutrition"><i class="bi bi-apple me-1"></i>Nutrition</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/meals"><i class="bi bi-egg-fried me-1"></i>Meal Plans</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill active" href="/workout"><i class="fas fa-dumbbell me-1"></i>Workouts</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/bmi"><i class="bi bi-graph-up-arrow me-1"></i>BMI</a></li>
+          {% include '_nav_auth.html' %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Page Header ───────────────────────────────────────── -->
+  <div class="page-header">
+    <div class="container-fluid px-4">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+          <h1 class="page-title">
+            <i class="fas fa-dumbbell me-2" style="color:#f59e0b"></i>Workout Library
+          </h1>
+          <p class="page-sub text-muted-custom mb-0">Step-by-step exercises with AI coaching · IBM Granite powered</p>
+        </div>
+        <span class="badge-live"><span class="status-dot"></span>AI Online</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid px-4 pb-5">
+
+    <!-- ── Workout Stats Strip ────────────────────────────── -->
+    <div class="row g-3 mb-4">
+      {% for icon, label, val, unit, color in [
+        ('fas fa-fire',       'Avg Burn',    '380',  'kcal/hr', '#f59e0b'),
+        ('fas fa-clock',      'Avg Duration','45',   'min',     '#6366f1'),
+        ('fas fa-layer-group','Exercises',   '24',   'total',   '#10b981'),
+        ('fas fa-bolt',       'Intensity',   'Med-High','',     '#ef4444'),
+      ] %}
+      <div class="col-6 col-lg-3">
+        <div class="kpi-card glass-card">
+          <div class="kpi-icon" style="color:{{ color }}"><i class="{{ icon }}"></i></div>
+          <div class="kpi-val">{{ val }}<span class="kpi-unit">{{ unit }}</span></div>
+          <div class="kpi-label">{{ label }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- ── AI Workout Generator ───────────────────────────── -->
+    <div class="glass-card mb-4">
+      <div class="card-section-header mb-3">
+        <i class="bi bi-stars me-2 text-warning"></i>AI Workout Generator
+        <span class="ms-auto badge-live small"><span class="status-dot" style="width:6px;height:6px"></span>IBM Granite</span>
+      </div>
+      <div class="row g-3 align-items-end">
+        <div class="col-6 col-md-3">
+          <label class="form-label text-muted-custom small">Fitness Level</label>
+          <select id="wLevel" class="form-select form-select-dark">
+            <option value="beginner">🟢 Beginner</option>
+            <option value="intermediate" selected>🟡 Intermediate</option>
+            <option value="advanced">🔴 Advanced</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label text-muted-custom small">Goal</label>
+          <select id="wGoal" class="form-select form-select-dark">
+            <option value="weight loss">⚡ Weight Loss</option>
+            <option value="muscle gain" selected>💪 Muscle Gain</option>
+            <option value="endurance">🏃 Endurance</option>
+            <option value="flexibility">🧘 Flexibility</option>
+            <option value="strength">🏋️ Strength</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label text-muted-custom small">Days per Week</label>
+          <select id="wDays" class="form-select form-select-dark">
+            <option value="3">3 days / week</option>
+            <option value="4" selected>4 days / week</option>
+            <option value="5">5 days / week</option>
+            <option value="6">6 days / week</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-3">
+          <button class="btn btn-gradient-primary w-100" onclick="generateWorkout()" id="genBtn">
+            <i class="bi bi-stars me-1"></i>Generate Plan
+          </button>
+        </div>
+      </div>
+      <div id="workoutAIResult" class="result-box result-box-lg mt-3" style="display:none"></div>
+    </div>
+
+    <!-- ── Muscle Group Filter ────────────────────────────── -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+      <h5 class="fw-bold mb-0"><i class="fas fa-th-large me-2 text-muted-custom" style="font-size:1rem"></i>Exercise Library</h5>
+      <div class="filter-bar" id="filterBar">
+        <button class="filter-btn active" data-filter="all" onclick="filterExercises(this,'all')">All</button>
+        <button class="filter-btn" data-filter="chest"    onclick="filterExercises(this,'chest')"><i class="fas fa-circle-dot me-1"></i>Chest</button>
+        <button class="filter-btn" data-filter="back"     onclick="filterExercises(this,'back')"><i class="fas fa-person me-1"></i>Back</button>
+        <button class="filter-btn" data-filter="legs"     onclick="filterExercises(this,'legs')"><i class="fas fa-person-walking me-1"></i>Legs</button>
+        <button class="filter-btn" data-filter="shoulders" onclick="filterExercises(this,'shoulders')"><i class="fas fa-arrows-up-down me-1"></i>Shoulders</button>
+        <button class="filter-btn" data-filter="arms"     onclick="filterExercises(this,'arms')"><i class="fas fa-hand-fist me-1"></i>Arms</button>
+        <button class="filter-btn" data-filter="core"     onclick="filterExercises(this,'core')"><i class="fas fa-circle me-1"></i>Core</button>
+        <button class="filter-btn" data-filter="cardio"   onclick="filterExercises(this,'cardio')"><i class="fas fa-heart-pulse me-1"></i>Cardio</button>
+      </div>
+    </div>
+
+    <!-- ── Exercise Cards Grid ───────────────────────────── -->
+    <div class="row g-4" id="exerciseGrid">
+
+      <!-- ══ CHEST ═══════════════════════════════════════════ -->
+      <div class="col-md-6 col-xl-4 exercise-item" data-group="chest">
+        <div class="exercise-card glass-card" onclick="openExercise('pushup')">
+          <div class="exercise-img-wrap">
+            <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80&fit=crop"
+                 alt="Push-Up" class="exercise-img" loading="lazy" />
+            <span class="exercise-badge" style="background:#6366f1">Chest</span>
+            <div class="exercise-difficulty beginner-diff">Beginner</div>
+          </div>
+          <div class="exercise-body">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+              <h6 class="exercise-name">Push-Up</h6>
+              <div class="exercise-icon-circle" style="background:rgba(99,102,241,0.15);color:#6366f1">
+                <i class="fas fa-dumbbell"></i>
+              </div>
+            </div>
+            <div class="exercise-meta">
+              <span><i class="bi bi-repeat me-1"></i>3 × 15 reps</span>
+              <span><i class="bi bi-clock me-1"></i>60s rest</span>
+              <span><i class="bi bi-fire me-1"></i>~60 kcal</span>
+            </div>
+            <p class="exercise-desc">Classic compound upper-body movement that builds chest, triceps, and core simultaneously.</p>
+            <div class="exercise-muscles">
+              <span class="muscle-tag">Pectorals</span>
+              <span class="muscle-tag">Triceps</span>
+              <span class="muscle-tag">Front Deltoid</span>
+            </div>
+            <button class="btn btn-glass w-100 mt-3 btn-sm" onclick="openExercise('pushup');event.stopPropagation()">
+              <i class="bi bi-play-circle me-1"></i>View Steps & Details
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-xl-4 exercise-item" data-group="chest">
+        <div class="exercise-card glass-card" onclick="openExercise('benchpress')">
+          <div class="exercise-img-wrap">
+            <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80&fit=crop"
+                 alt="Bench Press" class="exercise-img" loading="lazy" />
+            <span class="exercise-badge" style="background:#6366f1">Chest</span>
+            <div class="exercise-difficulty intermediate-diff">Intermediate</div>
+          </div>
+          <div class="exercise-body">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+              <h6 class="exercise-name">Barbell Bench Press</h6>
+              <div class="exercise-icon-circle" style="background:rgba(99,102,241,0.15);color:#6366f1">
+                <i class="fas fa-dumbbell"></i>
+              </div>
+            </div>
+            <div class="exercise-meta">
+              <span><i class="bi bi-repeat me-1"></i>4 × 8 reps</span>
+              <span><i class="bi bi-clock me-1"></i>90s rest</span>
+              <span><i class="bi bi-fire me-1"></i>~90 kcal</span>
+            </div>
+            <p class="exercise-desc">King of chest exercises. Builds maximum strength and mass across the entire pectoral region.</p>
+            <div class="exercise-muscles">
+              <span class="muscle-tag">Pectorals</span>
+              <span class="muscle-tag">Triceps</span>
+              <span class="muscle-tag">Anterior Deltoid</span>
+            </div>
+            <button class="btn btn-glass w-100 mt-3 btn-sm" onclick="openExercise('benchpress');event.stopPropagation()">
+              <i class="bi bi-play-circle me-1"></i>View Steps & Details
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ BACK ════════════════════════════════════════════ -->
+      <div class="col-md-6 col-xl-4 exercise-item" data-group="back">
+        <div class="exercise-card glass-card" onclick="openExercise('pullup')">
+          <div class="exercise-img-wrap">
+            <img src="https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=600&q=80&fit=crop"
+                 alt="Pull-Up" class="exercise-img" loading="lazy" />
+            <span class="exercise-badge" style="background:#10b981">Back</span>
+            <div class="exercise-difficulty intermediate-diff">Intermediate</div>
+          </div>
+          <div class="exercise-body">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+              <h6 class="exercise-name">Pull-Up</h6>
+              <div class="exercise-icon-circle" style="background:rgba(16,185,129,0.15);color:#10b981">
+                <i class="fas fa-person-rays"></i>
+              </div>
+            </div>
+            <div class="exercise-meta">
+              <span><i class="bi bi-repeat me-1"></i>3 × 8 reps</span>
+              <span><i class="bi bi-clock me-1"></i>90s rest</span>
+              <span><i class="bi bi-fire me-1"></i>~70 kcal</span>
+            </div>
+            <p class="exercise-desc">Ultimate back width builder. Targets the latissimus dorsi and dramatically improves the V-taper.</p>
+            <div class="exercise-muscles">
+              <span class="muscle-tag">Lats</span>
+              <span class="muscle-tag">Biceps</span>
+              <span class="muscle-tag">Rear Deltoid</span>
+            </div>
+            <button class="btn btn-glass w-100 mt-3 btn-sm" onclick="openExercise('pullup');event.stopPropagation()">
+              <i class="bi bi-play-circle me-1"></i>View Steps & Details
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-xl-4 exercise-item" data-group="back">
+        <div class="exercise-card glass-card" onclick="openExercise('deadlift')">
+          <div class="exercise-img-wrap">
+            <img src="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=600&q=80&fit=crop"
+                 alt="Deadlift" class="exercise-img" loading="lazy" />
+            <span class="exercise-badge" style="background:#10b981">Back</span>
+            <div class="exercise-difficulty advanced-diff">Advanced</div>
+          </div>
+          <div class="exercise-body">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+              <h6 class="exercise-name">Barbell Deadlift</h6>
+              <div class="exercise-icon-circle" style="background:rgba(16,185,129,0.15);color:#10b981">
+                <i class="fas fa-weight-hanging"></i>
+              </div>
+            </div>
+            <div class="exercise-meta">
+              <span><i class="bi bi-repeat me-1"></i>4 × 5 reps</span>
+              <span><i class="bi bi-clock me-1"></i>2 min rest</span>
+              <span><i class="bi bi-fire me-1"></i>~120 kcal</span>
+            </div>
+            <p class="exercise-desc">The most powerful total-body compound movement. Builds raw strength in back, glutes, and hamstrings.</p>
+            <div class="exercise-muscles">
+              <span class="muscle-tag">Lower Back</span>
+              <span class="muscle-tag">Glutes</span>
+              <span class="muscle-tag">Hamstrings</span>
+              <span class="muscle-tag">Traps</span>
+            </div>
+            <button class="btn btn-glass w-100 mt-3 btn-sm" onclick="openExercise('deadlift');event.stopPropagation()">
+              <i class="bi bi-play-circle me-1"></i>View Steps & Details
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ LEGS ════════════════════════════════════════════ -->
+      <div class="col-md-6 col-xl-4 exercise-item" data-group="legs">
+        <div class="exercise-card glass-card" onclick="openExercise('squat')">
+          <div class="exercise-img-wrap">
+            <img src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=600&q=80&fit=crop"
+                 alt="Squat" class="exercise-img" loading="lazy" />
+            <span class="exercise-badge" style="background:#f59e0b">Legs</span>
+            <div class="exercise-difficulty intermediate-diff">Intermediate</div>
+          </div>
+          <div class="exercise-body">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+              <h6 class="exercise-name">Barbell Back Squat</h6>
+              <div class="exercise-icon-circle" style="background:rgba(245,158,11,0.15);color:#f59e0b">
+                <i class="fas fa-person-walking"></i>
+              </div>
+            </div>
+            <div class="exercise-meta">
+              <span><i class="bi bi-repeat me-1"></i>4 × 10 reps</span>
+              <span><i class="bi bi-clock me-1"></i>90s rest</span>
+              <span><i class="bi bi-fire me-1"></i>~130 kcal</span>
+            </div>
+            <p class="exercise-desc">King of lower body exercises. Builds massive quad, glute, and hamstring strength while boosting metabolism.</p>
+            <div class="exercise-muscles">
+              <span class="muscle-tag">Quadriceps</span>
+              <span class="muscle-tag">Glutes</span>
+              <span class="muscle-tag">Hamstrings</span>
+              <span class="muscle-tag">Core</span>
+            </div>
+            <button class="btn btn-glass w-100 mt-3 btn-sm" onclick="openExercise('squat');event.stopPropagation()">
+              <i class="bi bi-play-circle me-1"></i>View Steps & Details
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-xl-4 exercise-item" data-group="legs">
+        <div class="exercise-card glass-card" onclick="openExercise('lunge')">
+          <div class="exercise-img-wrap">
+            <img src="https://images.unsplash.com/photo-1616803689943-5601631c7fec?w=600&q=80&fit=crop"
+                 alt="Lunge" class="exercise-img" loading="lazy" />
+            <span class="exercise-badge" style="background:#f59e0b">Legs</span>
+            <div class="exercise-difficulty beginner-diff">Beginner</div>
+          </div>
+          <div class="exercise-body">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+              <h6 class="exercise-name">Walking Lunges</h6>
+              <div class="exercise-icon-circle" style="background:rgba(245,158,11,0.15);color:#f59e0b">
+                <i class="fas fa-shoe-prints"></i>
+              </div>
+            </div>
+            <div class="exercise-meta">
+              <span><i class="bi bi-repeat me-1"></i>3 × 12 reps</span>
+              <span><i class="bi bi-clock me-1"></i>60s rest</span>
+              <span><i class="bi bi-fire me-1"></i>~80 kcal</span>
+            </div>
+            <p class="exercise-desc">Unilateral leg movement that improves balance, hip flexibility, and targets each leg independently.</p>
+            <div class="exercise-muscles">
+              <span class="muscle-tag">Quadriceps</span>
+              <span class="muscle-tag">Glutes</span>
+              <span class="muscle-tag">Hip Flexors</span>
+            </div>
+            <button class="btn btn-glass w-100 mt-3 btn-sm" onclick="openExercise('lunge');event.stopPropagation()">
+              <i class="bi bi-play-circle me-1"></i>View Steps & Details
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SHOULDERS ════════════════════════════════════════ -->
+      <div class="col-md-6 col-xl-4 exercise-item" data-group="shoulders">
+        <div class="exercise-card glass-card" onclick="openExercise('ohpress')">
+          <div class="exercise-img-wrap">
+            <img src="https://images.unsplash.com/photo-1590507621108-433608c97823?w=600&q=80&fit=crop"
+                 alt="Overhead Press" class="exercise-img" loading="lazy" />
+            <span class="exercise-badge" style="background:#8b5cf6">Shoulders</span>
+            <div class="exercise-difficulty intermediate-diff">Intermediate</div>
+          </div>
+          <div class="exercise-body">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+              <h6 class="exercise-name">Overhead Press</h6>
+              <div class="exercise-icon-circle" style="background:rgba(139,92,246,0.15);color:#8b5cf6">
+                <i class="fas fa-arrows-up-down"></i>
+              </div>
+            </div>
+            <div class="exercise-meta">
+              <span><i class="bi bi-repeat me-1"></i>4 × 8 reps</span>
+              <span><i class="bi bi-clock me-1"></i>90s rest</span>
+              <span><i class="bi bi-fire me-1"></i>~85 kcal</span>
+            </div>
+            <p class="exercise-desc">The definitive shoulder builder. Creates wide, powerful deltoids and improves overhead strength.</p>
+            <div class="exercise-muscles">
+              <span class="muscle-tag">Deltoids</span>
+              <span class="muscle-tag">Triceps</span>
+              <span class="muscle-tag">Upper Traps</span>
+            </div>
+            <button class="btn btn-glass w-100 mt-3 btn-sm" onclick="openExercise('ohpress');event.stopPropagation()">
+              <i class="bi bi-play-circle me-1"></i>View Steps & Details
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ ARMS ════════════════════════════════════════════ -->
+      <div class="col-md-6 col-xl-4 exercise-item" data-group="arms">
+        <div class="exercise-card glass-card" onclick="openExercise('bicep')">
+          <div class="exercise-img-wrap">
+            <img src="https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600&q=80&fit=crop"
+                 alt="Bicep Curl" class="exercise-img" loading="lazy" />
+            <span class="exercise-badge" style="background:#ef4444">Arms</span>
+            <div class="exercise-difficulty beginner-diff">Beginner</div>
+          </div>
+          <div class="exercise-body">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+              <h6 class="exercise-name">Dumbbell Bicep Curl</h6>
+              <div class="exercise-icon-circle" style="background:rgba(239,68,68,0.15);color:#ef4444">
+                <i class="fas fa-hand-fist"></i>
+              </div>
+            </div>
+            <div class="exercise-meta">
+              <span><i class="bi bi-repeat me-1"></i>3 × 12 reps</span>
+              <span><i class="bi bi-clock me-1"></i>60s rest</span>
+              <span><i class="bi bi-fire me-1"></i>~50 kcal</span>
+            </div>
+            <p class="exercise-desc">Isolation movement for maximum bicep peak. Slow, controlled reps maximize time-under-tension.</p>
+            <div class="exercise-muscles">
+              <span class="muscle-tag">Biceps Brachii</span>
+              <span class="muscle-tag">Brachialis</span>
+              <span class="muscle-tag">Forearms</span>
+            </div>
+            <button class="btn btn-glass w-100 mt-3 btn-sm" onclick="openExercise('bicep');event.stopPropagation()">
+              <i class="bi bi-play-circle me-1"></i>View Steps & Details
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ CORE ════════════════════════════════════════════ -->
+      <div class="col-md-6 col-xl-4 exercise-item" data-group="core">
+        <div class="exercise-card glass-card" onclick="openExercise('plank')">
+          <div class="exercise-img-wrap">
+            <img src="https://images.unsplash.com/photo-1598971457999-ca4ef48a9a71?w=600&q=80&fit=crop"
+                 alt="Plank" class="exercise-img" loading="lazy" />
+            <span class="exercise-badge" style="background:#06b6d4">Core</span>
+            <div class="exercise-difficulty beginner-diff">Beginner</div>
+          </div>
+          <div class="exercise-body">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+              <h6 class="exercise-name">Plank Hold</h6>
+              <div class="exercise-icon-circle" style="background:rgba(6,182,212,0.15);color:#06b6d4">
+                <i class="fas fa-circle"></i>
+              </div>
+            </div>
+            <div class="exercise-meta">
+              <span><i class="bi bi-repeat me-1"></i>3 × 60 sec</span>
+              <span><i class="bi bi-clock me-1"></i>45s rest</span>
+              <span><i class="bi bi-fire me-1"></i>~40 kcal</span>
+            </div>
+            <p class="exercise-desc">The gold standard core stability exercise. Strengthens the entire midsection from rectus to obliques.</p>
+            <div class="exercise-muscles">
+              <span class="muscle-tag">Rectus Abdominis</span>
+              <span class="muscle-tag">Obliques</span>
+              <span class="muscle-tag">Transverse Abs</span>
+            </div>
+            <button class="btn btn-glass w-100 mt-3 btn-sm" onclick="openExercise('plank');event.stopPropagation()">
+              <i class="bi bi-play-circle me-1"></i>View Steps & Details
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ CARDIO ═══════════════════════════════════════════ -->
+      <div class="col-md-6 col-xl-4 exercise-item" data-group="cardio">
+        <div class="exercise-card glass-card" onclick="openExercise('burpee')">
+          <div class="exercise-img-wrap">
+            <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&q=80&fit=crop"
+                 alt="Burpee" class="exercise-img" loading="lazy" />
+            <span class="exercise-badge" style="background:#ef4444">Cardio</span>
+            <div class="exercise-difficulty intermediate-diff">Intermediate</div>
+          </div>
+          <div class="exercise-body">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+              <h6 class="exercise-name">Burpee</h6>
+              <div class="exercise-icon-circle" style="background:rgba(239,68,68,0.15);color:#ef4444">
+                <i class="fas fa-heart-pulse"></i>
+              </div>
+            </div>
+            <div class="exercise-meta">
+              <span><i class="bi bi-repeat me-1"></i>3 × 10 reps</span>
+              <span><i class="bi bi-clock me-1"></i>60s rest</span>
+              <span><i class="bi bi-fire me-1"></i>~100 kcal</span>
+            </div>
+            <p class="exercise-desc">The ultimate full-body cardio blast. Spikes heart rate and burns maximum calories in minimum time.</p>
+            <div class="exercise-muscles">
+              <span class="muscle-tag">Full Body</span>
+              <span class="muscle-tag">Cardiovascular</span>
+              <span class="muscle-tag">Core</span>
+            </div>
+            <button class="btn btn-glass w-100 mt-3 btn-sm" onclick="openExercise('burpee');event.stopPropagation()">
+              <i class="bi bi-play-circle me-1"></i>View Steps & Details
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /row -->
+  </div><!-- /container -->
+
+  <!-- ══════════════════════════════════════════════════════════
+       EXERCISE DETAIL MODAL
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="modal fade" id="exerciseModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content exercise-modal-content">
+        <div class="modal-header exercise-modal-header">
+          <div class="d-flex align-items-center gap-3">
+            <div id="modalIconCircle" class="exercise-modal-icon">
+              <i id="modalIcon" class="fas fa-dumbbell"></i>
+            </div>
+            <div>
+              <h4 class="modal-title mb-0 fw-bold" id="modalTitle">Exercise</h4>
+              <div class="d-flex gap-2 mt-1" id="modalMeta"></div>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-0">
+          <div class="row g-0">
+
+            <!-- Left: image + quick stats -->
+            <div class="col-lg-5">
+              <div class="modal-img-panel">
+                <img id="modalImg" src="" alt="" class="modal-exercise-img" />
+                <div class="modal-quick-stats" id="modalQuickStats"></div>
+              </div>
+            </div>
+
+            <!-- Right: steps + tips -->
+            <div class="col-lg-7">
+              <div class="modal-info-panel">
+
+                <!-- Description -->
+                <p id="modalDesc" class="modal-exercise-desc"></p>
+
+                <!-- Muscles -->
+                <div class="mb-4">
+                  <div class="modal-section-title"><i class="fas fa-bullseye me-2 text-warning"></i>Target Muscles</div>
+                  <div id="modalMuscles" class="d-flex flex-wrap gap-2 mt-2"></div>
+                </div>
+
+                <!-- Step by Step -->
+                <div class="mb-4">
+                  <div class="modal-section-title"><i class="fas fa-list-ol me-2 text-primary-custom"></i>Step-by-Step Instructions</div>
+                  <ol class="steps-list mt-2" id="modalSteps"></ol>
+                </div>
+
+                <!-- Pro Tips -->
+                <div class="mb-4">
+                  <div class="modal-section-title"><i class="fas fa-lightbulb me-2 text-warning"></i>Pro Tips</div>
+                  <ul class="tips-list mt-2" id="modalTips"></ul>
+                </div>
+
+                <!-- Common Mistakes -->
+                <div class="mb-4">
+                  <div class="modal-section-title"><i class="fas fa-triangle-exclamation me-2" style="color:#ef4444"></i>Common Mistakes to Avoid</div>
+                  <ul class="mistakes-list mt-2" id="modalMistakes"></ul>
+                </div>
+
+                <!-- AI Ask Button -->
+                <div class="modal-ai-row">
+                  <button class="btn btn-gradient-primary w-100" id="modalAskAI" onclick="askAIAboutExercise()">
+                    <i class="bi bi-stars me-2"></i>Ask IBM Granite AI about this exercise
+                  </button>
+                  <div id="modalAIResponse" class="result-box mt-3" style="display:none"></div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+  // ── Exercise Data ──────────────────────────────────────────────────────────
+  const EXERCISES = {
+    pushup: {
+      name: 'Push-Up',
+      icon: 'fas fa-dumbbell',
+      iconColor: '#6366f1',
+      group: 'Chest',
+      groupColor: '#6366f1',
+      difficulty: 'Beginner',
+      img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=900&q=85&fit=crop',
+      sets: '3 sets', reps: '15 reps', rest: '60 sec', calories: '~60 kcal',
+      desc: 'The push-up is the ultimate bodyweight chest exercise. It simultaneously activates the pectorals, triceps, and anterior deltoids while demanding core stability.',
+      muscles: ['Pectorals','Triceps','Front Deltoid','Core','Serratus Anterior'],
+      steps: [
+        'Start in a high plank — hands shoulder-width apart, wrists directly under shoulders.',
+        'Engage your core and glutes; keep your body in a straight diagonal line from head to heels.',
+        'Inhale and lower your chest toward the floor by bending both elbows at a 45° angle.',
+        'Continue until your chest is 1–2 cm above the ground or until elbows reach 90°.',
+        'Pause briefly at the bottom — do not let your chest touch the floor.',
+        'Exhale and push explosively through your palms back to the starting position.',
+        'Lock out the elbows fully at the top and squeeze the chest for one count.',
+        'Repeat for the desired number of reps without breaking form.',
+      ],
+      tips: [
+        'Keep elbows at 45° — not flared wide — to protect your shoulder joints.',
+        'Squeeze your glutes and abs throughout to avoid a sagging lower back.',
+        'Drive the floor away rather than pushing yourself up — shifts focus to chest.',
+        'For extra chest stretch, use parallette bars or push-up handles.',
+        'Tempo push-ups (3 sec down, 1 sec up) dramatically increase difficulty.',
+      ],
+      mistakes: [
+        'Letting your hips sag or pike — your body must stay in a rigid plank.',
+        'Flaring elbows out to 90° — dangerous for the rotator cuff.',
+        'Performing partial reps — go full range for maximum muscle activation.',
+        'Holding your breath — sync breathing with the movement.',
+        'Looking up or down — keep your neck neutral, gaze at the floor.',
+      ],
+    },
+    benchpress: {
+      name: 'Barbell Bench Press',
+      icon: 'fas fa-dumbbell',
+      iconColor: '#6366f1',
+      group: 'Chest',
+      groupColor: '#6366f1',
+      difficulty: 'Intermediate',
+      img: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=85&fit=crop',
+      sets: '4 sets', reps: '8 reps', rest: '90 sec', calories: '~90 kcal',
+      desc: 'The barbell bench press is the quintessential upper-body strength movement and a staple of powerlifting, bodybuilding, and athletic programming worldwide.',
+      muscles: ['Pectorals','Triceps','Anterior Deltoid','Serratus Anterior'],
+      steps: [
+        'Lie flat on a bench with your eyes directly under the bar. Feet flat on the floor.',
+        'Grip the bar just wider than shoulder-width with an overhand (pronated) grip.',
+        'Retract your shoulder blades and press them into the bench — maintain this arch.',
+        'Unrack the bar and position it directly over your mid-chest (sternum area).',
+        'Inhale and lower the bar in a slight diagonal arc toward your lower chest.',
+        'Touch the bar lightly to your chest — do not bounce.',
+        'Exhale and press the bar back up and slightly back toward the rack.',
+        'Lock out the elbows at the top without completely disengaging the chest.',
+      ],
+      tips: [
+        'Always use a spotter or safety bars when lifting heavy.',
+        'Leg drive — pressing your feet into the floor — adds stability and power.',
+        'A moderate arch in the lower back is acceptable; excessive arching is dangerous.',
+        'Keep your wrists straight and in line with your forearms throughout.',
+        'Lower the bar with control — a 2-second eccentric increases muscle damage for growth.',
+      ],
+      mistakes: [
+        'Bouncing the bar off your chest — this reduces muscle activation and risks injury.',
+        'Lifting your feet off the floor — destabilises the entire movement.',
+        'Gripping the bar too wide or too narrow — causes shoulder impingement.',
+        'Failing to retract scapulae — leads to shoulder injury over time.',
+        'Locking out too aggressively and shrugging at the top — keep tension on the pecs.',
+      ],
+    },
+    pullup: {
+      name: 'Pull-Up',
+      icon: 'fas fa-person-rays',
+      iconColor: '#10b981',
+      group: 'Back',
+      groupColor: '#10b981',
+      difficulty: 'Intermediate',
+      img: 'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=900&q=85&fit=crop',
+      sets: '3 sets', reps: '8 reps', rest: '90 sec', calories: '~70 kcal',
+      desc: 'The pull-up is the gold standard of vertical pulling. It builds tremendous lat width, bicep strength, and overall upper-body pulling power with zero equipment other than a bar.',
+      muscles: ['Latissimus Dorsi','Biceps','Rear Deltoid','Rhomboids','Teres Major'],
+      steps: [
+        'Hang from a pull-up bar with a shoulder-width overhand (pronated) grip, arms fully extended.',
+        'Engage your core and cross your ankles behind you to prevent swinging.',
+        'Begin the pull by depressing and retracting your shoulder blades — think "shoulders down and back".',
+        'Drive your elbows toward the floor as you pull your chin up over the bar.',
+        'Continue until your chin is fully above the bar and chest is near it.',
+        'Pause at the top for one count, squeezing the lats.',
+        'Lower yourself slowly under control — 3 seconds on the way down.',
+        'Fully extend the arms at the bottom before starting the next rep.',
+      ],
+      tips: [
+        'Initiate with shoulder blade depression — not by bending the arms first.',
+        'Think about pulling the bar to your chest rather than your chest to the bar.',
+        'Slightly lean back at the top to increase lat activation.',
+        'If you cannot do a full pull-up, use resistance bands for assistance.',
+        'Weighted pull-ups (belt/vest) are among the best mass builders once bodyweight is mastered.',
+      ],
+      mistakes: [
+        'Using momentum / kipping — removes tension from the lats entirely.',
+        'Not fully extending at the bottom — you lose the eccentric stretch.',
+        'Pulling with biceps only — leads to elbow pain and poor lat development.',
+        'Shrugging the shoulders up at the top — a sign of weak scapular retractors.',
+        'Head jutting forward to "fake" getting the chin over the bar.',
+      ],
+    },
+    deadlift: {
+      name: 'Barbell Deadlift',
+      icon: 'fas fa-weight-hanging',
+      iconColor: '#10b981',
+      group: 'Back',
+      groupColor: '#10b981',
+      difficulty: 'Advanced',
+      img: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=900&q=85&fit=crop',
+      sets: '4 sets', reps: '5 reps', rest: '2 min', calories: '~120 kcal',
+      desc: 'The conventional deadlift is the most primal display of raw human strength. It engages more muscle mass than any other single exercise and releases powerful anabolic hormones.',
+      muscles: ['Lower Back (Erectors)','Glutes','Hamstrings','Traps','Forearms','Core'],
+      steps: [
+        'Stand with feet hip-width apart, bar over mid-foot (about 2 cm from shins).',
+        'Hinge at the hips and bend the knees to grip the bar shoulder-width apart.',
+        'Use a double overhand or mixed grip. Squeeze the bar hard.',
+        'Set your back: chest up, shoulders slightly in front of the bar, neutral spine.',
+        'Take a big breath into your belly (Valsalva manoeuvre) and brace your core maximally.',
+        'Push the floor away through your heels while simultaneously driving your hips forward.',
+        'Keep the bar dragging up your shins and thighs — maintain contact throughout.',
+        'Lock out at the top: hips and knees fully extended, shoulders back, bar at hip level.',
+        'Reverse the movement — hinge hips back first, then bend knees once the bar passes them.',
+        'Return the bar to the floor under control and reset before the next rep.',
+      ],
+      tips: [
+        'The cue "leg press the floor" helps activate the glutes and quads correctly.',
+        'Wear flat shoes or deadlift slippers — running shoes with cushion destabilise the lift.',
+        'Use chalk on your hands to improve grip on heavier loads.',
+        'Film yourself from the side to check bar path and back angle.',
+        'Avoid deadlifting to failure — the risk of spinal injury is too high.',
+      ],
+      mistakes: [
+        'Rounding the lower back (flexion under load) — the most dangerous deadlift error.',
+        'Jerking the bar off the floor — causes bar to drift away from body.',
+        'Bar drifting away from legs during the pull — creates a longer moment arm.',
+        'Hyperextending at lockout — not needed and strains the lumbar spine.',
+        'Looking too far up or down — keep a neutral neck position throughout.',
+      ],
+    },
+    squat: {
+      name: 'Barbell Back Squat',
+      icon: 'fas fa-person-walking',
+      iconColor: '#f59e0b',
+      group: 'Legs',
+      groupColor: '#f59e0b',
+      difficulty: 'Intermediate',
+      img: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=900&q=85&fit=crop',
+      sets: '4 sets', reps: '10 reps', rest: '90 sec', calories: '~130 kcal',
+      desc: 'The barbell back squat is unrivalled for lower body development. It floods the body with testosterone and growth hormone, making it a cornerstone of any serious training programme.',
+      muscles: ['Quadriceps','Glutes','Hamstrings','Core','Calves','Adductors'],
+      steps: [
+        'Set the bar at upper-chest height on a squat rack. Step under it so it rests on your upper traps.',
+        'Grip the bar slightly wider than shoulder-width and pull it tight to your traps for stability.',
+        'Unrack the bar by standing up — step back with two controlled steps.',
+        'Feet shoulder-width apart, toes pointed out 15–30°.',
+        'Inhale deeply (brace your abs like bracing for a punch), push your knees out in line with toes.',
+        'Descend by pushing hips back and down simultaneously — do not just bend the knees.',
+        'Lower until thighs are parallel to the floor (or below parallel if mobility allows).',
+        'Drive through your entire foot — not just heels — to stand back up.',
+        'Exhale at the top. Repeat for the desired reps before re-racking the bar.',
+      ],
+      tips: [
+        'A high-bar position (on traps) suits a more upright torso. Low-bar shifts load to posterior chain.',
+        '"Knees out" cue is critical — prevents valgus collapse that causes knee injuries.',
+        'Use a squat wedge or elevate heels if ankle mobility limits depth.',
+        'Pause squats (1 second at the bottom) build explosive power and clean form.',
+        'Control the eccentric (3–4 seconds down) for maximum muscle growth.',
+      ],
+      mistakes: [
+        'Knees caving inward (valgus) — the primary cause of long-term knee problems.',
+        'Rising onto toes — means the weight is too far forward; heels should stay planted.',
+        'Incomplete depth — partial squats reduce glute activation significantly.',
+        'Over-arching the lower back at the top of the rep.',
+        'Looking straight up — tilts the torso forward; focus gaze on a fixed point ahead.',
+      ],
+    },
+    lunge: {
+      name: 'Walking Lunges',
+      icon: 'fas fa-shoe-prints',
+      iconColor: '#f59e0b',
+      group: 'Legs',
+      groupColor: '#f59e0b',
+      difficulty: 'Beginner',
+      img: 'https://images.unsplash.com/photo-1616803689943-5601631c7fec?w=900&q=85&fit=crop',
+      sets: '3 sets', reps: '12 each leg', rest: '60 sec', calories: '~80 kcal',
+      desc: 'Walking lunges develop unilateral leg strength and balance while improving hip mobility — essential for runners, athletes, and anyone looking to address muscle imbalances.',
+      muscles: ['Quadriceps','Glutes','Hamstrings','Hip Flexors','Calves','Core'],
+      steps: [
+        'Stand tall with feet together, hands on hips or holding dumbbells.',
+        'Take a long stride forward with your right foot — big step, not small.',
+        'Lower your back (left) knee toward the floor until both knees are at 90°.',
+        'Keep your front shin vertical and knee tracking over the 2nd toe.',
+        'Your back knee should hover 2–3 cm above the floor.',
+        'Drive through the heel of your front foot to stand up.',
+        'Bring the back foot forward to meet the front foot, then immediately step forward with the other leg.',
+        'Continue alternating legs for the full set distance or rep count.',
+      ],
+      tips: [
+        'Take a long step — short steps put excessive strain on the front knee.',
+        'Maintain an upright torso; do not lean forward over the front leg.',
+        'Add dumbbells or a barbell for progressive overload once bodyweight becomes easy.',
+        'Reverse lunges (stepping back) are gentler on the knees — good regression option.',
+        'Focus on controlled descent — avoid crashing the knee into the floor.',
+      ],
+      mistakes: [
+        'Front knee travelling past the toes — increases patellar tendon stress.',
+        'Leaning the torso excessively forward — reduces glute activation.',
+        'Touching the back knee to the floor with force.',
+        'Taking too short a stride — limits range of motion and glute engagement.',
+        'Looking down — maintain a forward gaze to stay upright.',
+      ],
+    },
+    ohpress: {
+      name: 'Overhead Press',
+      icon: 'fas fa-arrows-up-down',
+      iconColor: '#8b5cf6',
+      group: 'Shoulders',
+      groupColor: '#8b5cf6',
+      difficulty: 'Intermediate',
+      img: 'https://images.unsplash.com/photo-1590507621108-433608c97823?w=900&q=85&fit=crop',
+      sets: '4 sets', reps: '8 reps', rest: '90 sec', calories: '~85 kcal',
+      desc: 'The standing overhead press is both a shoulder builder and a full-body strength test. It demands total body tension and is one of the five fundamental human movement patterns.',
+      muscles: ['Anterior Deltoid','Medial Deltoid','Triceps','Upper Traps','Core','Glutes'],
+      steps: [
+        'Set the barbell at upper-chest height on a rack. Grip slightly wider than shoulder-width.',
+        'Unrack the bar and hold it at the front of your shoulders (front rack position).',
+        'Stand with feet hip-width apart, glutes and core fully braced.',
+        'Tuck the chin slightly to create space for the bar to travel past the face.',
+        'Press the bar directly overhead in a vertical path — move your head back slightly as the bar passes.',
+        'Once the bar clears your forehead, push your head forward and press to full lockout.',
+        'At lockout, shrug the traps slightly to keep the shoulder joint stable overhead.',
+        'Lower the bar under control back to the front rack position on your shoulders.',
+      ],
+      tips: [
+        'A hip-width stance is more stable than feet together — allows better bracing.',
+        'Squeeze every muscle in your body at lockout — legs, glutes, abs, everything.',
+        'The bar path should be vertical when viewed from the side — not forward or backward.',
+        'Use wrist wraps if you feel wrist discomfort — pressing with bent wrists causes pain.',
+        'Start with a conservative weight to nail the bar path before adding load.',
+      ],
+      mistakes: [
+        'Pressing forward instead of straight up — reduces mechanical efficiency.',
+        'Leaning back excessively at the top — puts severe stress on the lumbar spine.',
+        'Not fully locking out overhead — incomplete activation of deltoids.',
+        'Using leg drive (push press) when it should be strict — reduces shoulder training stimulus.',
+        'Bar path drifting forward off the face — indicates weak upper back.',
+      ],
+    },
+    bicep: {
+      name: 'Dumbbell Bicep Curl',
+      icon: 'fas fa-hand-fist',
+      iconColor: '#ef4444',
+      group: 'Arms',
+      groupColor: '#ef4444',
+      difficulty: 'Beginner',
+      img: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=900&q=85&fit=crop',
+      sets: '3 sets', reps: '12 reps', rest: '60 sec', calories: '~50 kcal',
+      desc: 'The dumbbell curl is the classic bicep builder. Its unilateral nature corrects strength imbalances between arms while allowing maximum range of motion for peak contraction.',
+      muscles: ['Biceps Brachii','Brachialis','Brachioradialis','Forearms'],
+      steps: [
+        'Stand or sit with a dumbbell in each hand, arms fully extended, palms facing inward.',
+        'Pin your elbows to your sides — they must not swing forward during the movement.',
+        'Supinate (rotate) your wrists so palms face upward as you begin the curl.',
+        'Curl the dumbbells upward by flexing at the elbows — not at the shoulder.',
+        'Continue until the dumbbells are at shoulder height and biceps are fully contracted.',
+        'Squeeze the biceps hard at the top for one count.',
+        'Slowly lower (3–4 seconds) back to full extension, re-supinating on the way down.',
+        'Do not rest at the bottom — maintain tension and immediately begin the next rep.',
+      ],
+      tips: [
+        'Alternate arms for higher total volume, or curl both simultaneously for intensity.',
+        'The supination (wrist rotation) is what differentiates the curl from a hammer curl — maximises bicep peak.',
+        'Incline dumbbell curls provide a greater stretch at the bottom for superior long-head development.',
+        'Slow the eccentric (lowering) phase to increase time-under-tension.',
+        'Concentration curls at the end of a set are excellent for the mind-muscle connection.',
+      ],
+      mistakes: [
+        'Swinging the elbows forward to "cheat" — reduces bicep work and risks shoulder injury.',
+        'Using momentum from the lower back to swing the weight up.',
+        'Not fully extending at the bottom — misses the eccentric stretch.',
+        'Letting the wrists bend backward under load — always keep them neutral.',
+        'Going too heavy — bicep curls are an isolation move; form is everything.',
+      ],
+    },
+    plank: {
+      name: 'Plank Hold',
+      icon: 'fas fa-circle',
+      iconColor: '#06b6d4',
+      group: 'Core',
+      groupColor: '#06b6d4',
+      difficulty: 'Beginner',
+      img: 'https://images.unsplash.com/photo-1598971457999-ca4ef48a9a71?w=900&q=85&fit=crop',
+      sets: '3 sets', reps: '60 seconds', rest: '45 sec', calories: '~40 kcal',
+      desc: 'The plank is the most efficient core exercise because it builds endurance in the muscles that stabilise the spine — the key to preventing back pain and performing all other lifts safely.',
+      muscles: ['Rectus Abdominis','Transverse Abdominis','Obliques','Glutes','Serratus Anterior','Lower Back'],
+      steps: [
+        'Begin in a forearm plank: elbows directly under shoulders, forearms flat on the floor.',
+        'Position feet together or hip-width apart — both heels pressing back.',
+        'Lift your hips off the floor until your body forms a perfect straight line from head to heels.',
+        'Squeeze your glutes as hard as you can — this protects the lower back.',
+        'Draw your navel toward your spine (hollowing) and brace your abs.',
+        'Keep your neck neutral — do not look up or let your head drop.',
+        'Breathe slowly and rhythmically; do not hold your breath.',
+        'Hold for the target time. If form breaks before time, stop and rest.',
+      ],
+      tips: [
+        'Quality beats quantity — 30 perfect seconds beats 60 sloppyseconds every time.',
+        'Progress to: long-lever plank → plank with shoulder tap → RKC plank for more difficulty.',
+        'Side planks specifically target the obliques — add them for complete core development.',
+        'Push up slightly through the elbows to engage the serratus anterior.',
+        'For high-plank (straight arm) version, keep wrists under shoulders not in front.',
+      ],
+      mistakes: [
+        'Hips sagging toward the floor — the most common error; squeezing glutes prevents this.',
+        'Hips too high (piking) — turns the plank into a downward dog.',
+        'Head drooping or looking up — must maintain a neutral neck.',
+        'Holding your breath — creates unnecessary intra-abdominal pressure buildup.',
+        'Placing elbows too far forward — shifts load away from core.',
+      ],
+    },
+    burpee: {
+      name: 'Burpee',
+      icon: 'fas fa-heart-pulse',
+      iconColor: '#ef4444',
+      group: 'Cardio',
+      groupColor: '#ef4444',
+      difficulty: 'Intermediate',
+      img: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=900&q=85&fit=crop',
+      sets: '3 sets', reps: '10 reps', rest: '60 sec', calories: '~100 kcal',
+      desc: 'The burpee is the most efficient full-body conditioning exercise ever devised. It combines a squat, push-up, and explosive jump into one seamless movement that torches calories and builds endurance.',
+      muscles: ['Full Body','Quadriceps','Chest','Shoulders','Core','Calves','Cardiovascular System'],
+      steps: [
+        'Stand with feet shoulder-width apart, arms at your sides.',
+        'Drop your hips back and down — squat and place both hands flat on the floor in front of your feet.',
+        'Jump or step both feet back simultaneously into a high plank position.',
+        'Perform a full push-up: lower chest to the floor, press back up (or drop to the floor for standard burpee).',
+        'Jump both feet back toward your hands, landing with feet outside your hands.',
+        'Stand up explosively and immediately jump vertically into the air.',
+        'Reach both arms overhead at the peak of the jump.',
+        'Land softly with knees slightly bent to absorb impact — immediately descend into the next rep.',
+      ],
+      tips: [
+        'Set a pace you can maintain for all reps — do not sprint the first two and burn out.',
+        'The push-up can be modified (knees down) without sacrificing the cardio benefit.',
+        'For maximum calorie burn, minimise time on the floor — be explosive in transitions.',
+        'Box jump burpees (jumping onto an elevated platform) massively increase intensity.',
+        'Add a tuck jump at the top for extra plyometric challenge.',
+      ],
+      mistakes: [
+        'Not fully extending at the top of the jump — limits plyometric power development.',
+        'Landing with stiff legs — high impact on knees; always land with a soft bend.',
+        'Skipping the push-up — this removes the upper body component entirely.',
+        'Not locking out the plank position — leads to a sagging lower back.',
+        'Going too fast without control — quality burpees burn far more than sloppy ones.',
+      ],
+    },
+  };
+
+  let currentExerciseName = '';
+
+  // ── Filter exercises ───────────────────────────────────────────────────────
+  function filterExercises(btn, group) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.exercise-item').forEach(item => {
+      const show = group === 'all' || item.dataset.group === group;
+      item.style.display = show ? '' : 'none';
+      if (show) item.classList.add('animate-slide-up');
+    });
+  }
+
+  // ── Open exercise modal ────────────────────────────────────────────────────
+  function openExercise(key) {
+    const ex = EXERCISES[key];
+    if (!ex) return;
+    currentExerciseName = ex.name;
+
+    // Header
+    document.getElementById('modalTitle').textContent = ex.name;
+    document.getElementById('modalIcon').className = ex.icon;
+    document.getElementById('modalIconCircle').style.background = ex.iconColor + '22';
+    document.getElementById('modalIconCircle').style.color = ex.iconColor;
+
+    // Meta pills
+    document.getElementById('modalMeta').innerHTML = [
+      `<span class="exercise-badge" style="background:${ex.groupColor}">${ex.group}</span>`,
+      `<span class="difficulty-pill ${ex.difficulty.toLowerCase()}-diff">${ex.difficulty}</span>`,
+    ].join('');
+
+    // Image
+    document.getElementById('modalImg').src = ex.img;
+    document.getElementById('modalImg').alt = ex.name;
+
+    // Quick stats
+    document.getElementById('modalQuickStats').innerHTML = [
+      { icon:'bi bi-stack', label: ex.sets },
+      { icon:'bi bi-repeat', label: ex.reps },
+      { icon:'bi bi-clock', label: ex.rest + ' rest' },
+      { icon:'bi bi-fire', label: ex.calories },
+    ].map(s => `<div class="qs-item"><i class="${s.icon}"></i>${s.label}</div>`).join('');
+
+    // Desc
+    document.getElementById('modalDesc').textContent = ex.desc;
+
+    // Muscles
+    document.getElementById('modalMuscles').innerHTML =
+      ex.muscles.map(m => `<span class="muscle-tag">${m}</span>`).join('');
+
+    // Steps
+    document.getElementById('modalSteps').innerHTML =
+      ex.steps.map(s => `<li>${s}</li>`).join('');
+
+    // Tips
+    document.getElementById('modalTips').innerHTML =
+      ex.tips.map(t => `<li>${t}</li>`).join('');
+
+    // Mistakes
+    document.getElementById('modalMistakes').innerHTML =
+      ex.mistakes.map(m => `<li>${m}</li>`).join('');
+
+    // Reset AI
+    document.getElementById('modalAIResponse').style.display = 'none';
+    document.getElementById('modalAIResponse').innerHTML = '';
+    document.getElementById('modalAskAI').disabled = false;
+    document.getElementById('modalAskAI').innerHTML = '<i class="bi bi-stars me-2"></i>Ask IBM Granite AI about this exercise';
+
+    new bootstrap.Modal(document.getElementById('exerciseModal')).show();
+  }
+
+  // ── Ask AI about the exercise ──────────────────────────────────────────────
+  async function askAIAboutExercise() {
+    const btn = document.getElementById('modalAskAI');
+    const res = document.getElementById('modalAIResponse');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Asking IBM Granite…';
+    btn.disabled = true;
+    res.style.display = 'block';
+    res.innerHTML = '<span class="text-muted-custom">Generating personalised advice…</span>';
+    try {
+      const r = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ message: 'Give me detailed coaching advice, progression tips, and injury prevention strategies for the ' + currentExerciseName + ' exercise. Include beginner modifications and advanced variations.' })
+      });
+      const data = await r.json();
+      res.innerHTML = (data.response || '').replace(/\n/g, '<br/>');
+    } catch(e) {
+      res.innerHTML = '⚠️ Could not reach AI. Please try again.';
+    }
+    btn.innerHTML = '<i class="bi bi-stars me-2"></i>Ask IBM Granite AI about this exercise';
+    btn.disabled = false;
+  }
+
+  // ── Generate AI workout plan ───────────────────────────────────────────────
+  async function generateWorkout() {
+    const btn = document.getElementById('genBtn');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Generating…';
+    btn.disabled = true;
+    const el = document.getElementById('workoutAIResult');
+    el.style.display = 'block';
+    el.innerHTML = '<span class="text-muted-custom">IBM Granite is crafting your personalised plan…</span>';
+    const res = await fetch('/api/workout-plan', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        level: document.getElementById('wLevel').value,
+        goal:  document.getElementById('wGoal').value,
+        days:  document.getElementById('wDays').value
+      })
+    });
+    const data = await res.json();
+    el.innerHTML = (data.plan || '').replace(/\n/g, '<br/>');
+    btn.innerHTML = '<i class="bi bi-stars me-1"></i>Generate Plan';
+    btn.disabled = false;
+  }
+  </script>
+</body>
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitVerse AI — Smart Nutrition & Wellness</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+</head>
+<body class="fitverse-body">
+
+  <!-- ── Navbar ─────────────────────────────────────────────────────────── -->
+  <nav class="navbar navbar-expand-lg navbar-dark fitverse-nav sticky-top">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand brand-logo" href="/">
+        <span class="brand-icon"><i class="fas fa-dumbbell"></i></span>
+        FitVerse <span class="brand-ai">AI</span>
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+          <li class="nav-item"><a class="nav-link nav-pill" href="/"><i class="bi bi-house-door me-1"></i>Home</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/dashboard"><i class="bi bi-grid me-1"></i>Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/nutrition"><i class="bi bi-apple me-1"></i>Nutrition</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/meals"><i class="bi bi-egg-fried me-1"></i>Meal Plans</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/workout"><i class="fas fa-dumbbell me-1"></i>Workouts</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/bmi"><i class="bi bi-graph-up-arrow me-1"></i>BMI</a></li>
+          {% include '_nav_auth.html' %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Hero Section ───────────────────────────────────────────────────── -->
+  <section class="hero-section">
+    <div class="hero-bg-orbs">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+    <div class="container position-relative z-1">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-6 text-center text-lg-start">
+          <div class="hero-badge mb-4 animate-fade-up">
+            <i class="bi bi-stars me-2 text-warning"></i>
+            Powered by IBM watsonx.ai Granite Foundation Models
+          </div>
+          <h1 class="hero-title animate-fade-up delay-1">
+            Your AI-Powered<br/>
+            <span class="gradient-text">Nutrition & Wellness</span><br/>
+            Coach
+          </h1>
+          <p class="hero-subtitle animate-fade-up delay-2 mx-auto mx-lg-0">
+            Personalized meal plans · Calorie analysis · BMI tracking · Smart fitness coaching<br/>
+            all driven by IBM Granite AI — free, private, and always on.
+          </p>
+          <div class="hero-cta animate-fade-up delay-3 justify-content-center justify-content-lg-start">
+            <a href="/dashboard" class="btn btn-gradient-primary btn-lg me-3 px-5">
+              <i class="bi bi-rocket-takeoff me-2"></i>Launch Dashboard
+            </a>
+            <a href="#features" class="btn btn-glass btn-lg px-5">
+              <i class="bi bi-play-circle me-2"></i>Explore Features
+            </a>
+          </div>
+        </div>
+        <div class="col-lg-6 d-none d-lg-block">
+          <div class="hero-visual animate-fade-up delay-2">
+            <div class="hero-photo-main">
+              <img src="https://images.pexels.com/photos/5103671/pexels-photo-5103671.jpeg?auto=compress&cs=tinysrgb&w=1000&h=750&dpr=1" alt="Runner training at sunset" loading="lazy" />
+            </div>
+            <div class="hero-photo-accent hero-photo-accent-1">
+              <img src="https://images.pexels.com/photos/6740519/pexels-photo-6740519.jpeg?auto=compress&cs=tinysrgb&w=400&h=320&dpr=1" alt="Healthy vegan bowl" loading="lazy" />
+            </div>
+            <div class="hero-photo-accent hero-photo-accent-2">
+              <img src="https://images.pexels.com/photos/2247179/pexels-photo-2247179.jpeg?auto=compress&cs=tinysrgb&w=320&h=260&dpr=1" alt="Strength workout" loading="lazy" />
+            </div>
+            <div class="hero-photo-badge">
+              <div class="badge-icon"><i class="bi bi-graph-up-arrow"></i></div>
+              <div>
+                <div class="badge-text-main">98% Satisfaction</div>
+                <div class="badge-text-sub">from real users</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Stats Row -->
+      <div class="hero-stats animate-fade-up delay-4">
+        <div class="stat-item">
+          <div class="stat-num" data-target="50000">0</div>
+          <div class="stat-label">Active Users</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-num" data-target="1200000">0</div>
+          <div class="stat-label">Meals Analyzed</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-num" data-target="98">0</div>
+          <div class="stat-label">% Satisfaction</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-num" data-target="500">0</div>
+          <div class="stat-label">AI Models</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ───────────────────────────────────────────────────────── -->
+  <section id="features" class="section-dark py-5">
+    <div class="container py-4">
+      <div class="section-header text-center mb-5">
+        <span class="section-badge">Core Features</span>
+        <h2 class="section-title">Everything You Need to <span class="gradient-text">Thrive</span></h2>
+        <p class="section-sub">IBM Granite AI models power every insight, recommendation, and plan.</p>
+      </div>
+      <div class="row g-4">
+        {% set features = [
+          ('bi bi-chat-dots-fill','AI Nutrition Coach','Chat with your personal AI coach powered by IBM Granite — get instant, science-backed advice tailored to you.','#6366f1','/dashboard','https://images.pexels.com/photos/5496464/pexels-photo-5496464.jpeg?auto=compress&cs=tinysrgb&w=600&h=340&dpr=1'),
+          ('bi bi-calculator-fill','Calorie Analyzer','Paste any meal or food list and receive a full macro breakdown, health score, and improvement tips.','#10b981','/nutrition','https://images.pexels.com/photos/6740849/pexels-photo-6740849.jpeg?auto=compress&cs=tinysrgb&w=600&h=340&dpr=1'),
+          ('bi bi-calendar3-fill','7-Day Meal Planner','Generate a complete weekly meal plan matching your goals, dietary preferences, and calorie targets.','#f59e0b','/meals','https://images.pexels.com/photos/9213886/pexels-photo-9213886.jpeg?auto=compress&cs=tinysrgb&w=600&h=340&dpr=1'),
+          ('bi bi-activity','BMI & Health Metrics','Calculate BMI, BMR, and TDEE instantly with personalised AI recommendations for your body type.','#ef4444','/bmi','https://images.pexels.com/photos/53404/pexels-photo-53404.jpeg?auto=compress&cs=tinysrgb&w=600&h=340&dpr=1'),
+          ('bi bi-lightning-charge-fill','Workout Generator','Get AI-crafted workout routines matched to your fitness level, goals, and available equipment.','#8b5cf6','/dashboard','https://images.pexels.com/photos/6551104/pexels-photo-6551104.jpeg?auto=compress&cs=tinysrgb&w=600&h=340&dpr=1'),
+          ('bi bi-shield-check-fill','Privacy-First AI','All AI processing runs via IBM Cloud — your data never trains third-party commercial models.','#06b6d4','/dashboard','https://images.pexels.com/photos/3888151/pexels-photo-3888151.jpeg?auto=compress&cs=tinysrgb&w=600&h=340&dpr=1'),
+        ] %}
+        {% for icon, title, desc, color, link, photo in features %}
+        <div class="col-md-6 col-lg-4">
+          <div class="feature-card glass-card h-100 animate-slide-up">
+            <div class="feature-img-wrap">
+              <img src="{{ photo }}" alt="{{ title }}" loading="lazy" />
+            </div>
+            <div class="feature-icon" style="--icon-color:{{ color }}">
+              <i class="{{ icon }}"></i>
+            </div>
+            <h5 class="feature-title mt-3">{{ title }}</h5>
+            <p class="feature-desc text-muted-custom">{{ desc }}</p>
+            <a href="{{ link }}" class="feature-link">
+              Try it <i class="bi bi-arrow-right-short"></i>
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── AI Chat Demo ────────────────────────────────────────────────────── -->
+  <section class="section-darker py-5">
+    <div class="container py-4">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-5">
+          <span class="section-badge">Live AI Demo</span>
+          <h2 class="section-title">Ask Your AI<br/><span class="gradient-text">Nutrition Coach</span></h2>
+          <p class="text-muted-custom mb-4">
+            Try the IBM Granite-powered chat right here. Ask about calories, meal ideas, BMI, workouts — anything wellness-related.
+          </p>
+          <ul class="demo-prompts">
+            <li onclick="setPrompt(this)">What should I eat to lose weight?</li>
+            <li onclick="setPrompt(this)">Create a high-protein breakfast idea</li>
+            <li onclick="setPrompt(this)">How many calories in a chicken salad?</li>
+            <li onclick="setPrompt(this)">Give me a 30-minute workout plan</li>
+          </ul>
+        </div>
+        <div class="col-lg-7">
+          <div class="chat-widget glass-card">
+            <div class="chat-header">
+              <div class="chat-avatar"><i class="fas fa-robot"></i></div>
+              <div>
+                <div class="chat-name">FitVerse AI</div>
+                <div class="chat-status"><span class="status-dot"></span> Online · IBM Granite</div>
+              </div>
+            </div>
+            <div class="chat-body" id="chatMessages">
+              <div class="chat-msg ai-msg">
+                <div class="msg-bubble">
+                  👋 Hi! I'm your FitVerse AI coach powered by IBM Granite. Ask me anything about nutrition, fitness, or wellness!
+                </div>
+              </div>
+            </div>
+            <div class="chat-input-row">
+              <input type="text" id="chatInput" class="form-control chat-input"
+                     placeholder="Ask about nutrition, calories, workouts…"
+                     onkeydown="if(event.key==='Enter') sendChat()" />
+              <button class="btn btn-gradient-primary" onclick="sendChat()">
+                <i class="bi bi-send-fill"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── How It Works ────────────────────────────────────────────────────── -->
+  <section class="section-dark py-5">
+    <div class="container py-4">
+      <div class="section-header text-center mb-5">
+        <span class="section-badge">How It Works</span>
+        <h2 class="section-title">Three Steps to a <span class="gradient-text">Healthier You</span></h2>
+      </div>
+      <div class="row g-4 justify-content-center">
+        {% for num, icon, title, desc, color in [
+          ('01','bi bi-person-plus-fill','Set Your Goals','Tell the AI your fitness goal, diet preference, and any restrictions.','#6366f1'),
+          ('02','bi bi-cpu-fill','AI Generates Your Plan','IBM Granite models craft a personalised plan uniquely suited to you.','#06b6d4'),
+          ('03','bi bi-trophy-fill','Track & Improve','Log meals, check BMI trends, and refine your plan weekly.','#f59e0b'),
+        ] %}
+        <div class="col-md-4">
+          <div class="step-card text-center glass-card">
+            <div class="step-num">{{ num }}</div>
+            <div class="step-icon" style="--icon-color:{{ color }}"><i class="{{ icon }}"></i></div>
+            <h5 class="mt-3 fw-semibold">{{ title }}</h5>
+            <p class="text-muted-custom small">{{ desc }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── IBM watsonx Banner ──────────────────────────────────────────────── -->
+  <section class="ibm-banner py-5">
+    <div class="container text-center py-3">
+      <div class="ibm-logo mb-3"><i class="fas fa-microchip me-2"></i>IBM watsonx.ai</div>
+      <h2 class="fw-bold mb-3">Enterprise AI You Can Trust</h2>
+      <p class="text-muted-custom mx-auto" style="max-width:560px">
+        FitVerse AI is built on IBM's Granite foundation models — transparent, trustworthy, and enterprise-grade AI that respects your privacy.
+      </p>
+      <div class="ibm-badges mt-4">
+        <span class="ibm-badge"><i class="bi bi-shield-lock me-1"></i>Privacy-First</span>
+        <span class="ibm-badge"><i class="bi bi-award me-1"></i>Granite Models</span>
+        <span class="ibm-badge"><i class="bi bi-cloud-check me-1"></i>IBM Cloud</span>
+        <span class="ibm-badge"><i class="bi bi-graph-up me-1"></i>Enterprise Grade</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+  <footer class="fitverse-footer py-4">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-4">
+          <div class="brand-logo mb-2">
+            <span class="brand-icon"><i class="fas fa-dumbbell"></i></span>
+            FitVerse <span class="brand-ai">AI</span>
+          </div>
+          <p class="small text-muted-custom">Powered by IBM watsonx.ai Granite Models</p>
+        </div>
+        <div class="col-md-4 text-center">
+          <div class="footer-links">
+            <a href="/">Home</a><a href="/dashboard">Dashboard</a>
+            <a href="/nutrition">Nutrition</a><a href="/bmi">BMI</a>
+          </div>
+        </div>
+        <div class="col-md-4 text-end">
+          <p class="small text-muted-custom mb-0">&copy; 2024 FitVerse AI. Built with IBM Granite.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+    // Counter animation
+    function animateCounters() {
+      document.querySelectorAll('.stat-num').forEach(el => {
+        const target = +el.dataset.target;
+        const duration = 2000, steps = 60, increment = target / steps;
+        let current = 0, step = 0;
+        const timer = setInterval(() => {
+          current += increment; step++;
+          if (step >= steps) { el.textContent = target >= 1000000 ? (target/1000000).toFixed(1)+'M' : target >= 1000 ? (target/1000).toFixed(0)+'K' : target+'%'; clearInterval(timer); }
+          else { el.textContent = current >= 1000000 ? (current/1000000).toFixed(1)+'M' : current >= 1000 ? Math.floor(current/1000)+'K' : Math.floor(current)+(target===98?'%':''); }
+        }, duration / steps);
+      });
+    }
+    const statsObs = new IntersectionObserver(e => { if (e[0].isIntersecting) { animateCounters(); statsObs.disconnect(); } }, { threshold: 0.5 });
+    const statsEl = document.querySelector('.hero-stats');
+    if (statsEl) statsObs.observe(statsEl);
+
+    function setPrompt(el) {
+      document.getElementById('chatInput').value = el.textContent;
+      document.getElementById('chatInput').focus();
+    }
+
+    async function sendChat() {
+      const input = document.getElementById('chatInput');
+      const msg = input.value.trim();
+      if (!msg) return;
+      const box = document.getElementById('chatMessages');
+      box.innerHTML += `<div class="chat-msg user-msg"><div class="msg-bubble">${msg}</div></div>`;
+      input.value = '';
+      box.innerHTML += `<div class="chat-msg ai-msg" id="typing"><div class="msg-bubble typing-indicator"><span></span><span></span><span></span></div></div>`;
+      box.scrollTop = box.scrollHeight;
+      try {
+        const res = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message: msg}) });
+        const data = await res.json();
+        document.getElementById('typing')?.remove();
+        const text = data.response || data.error || 'Something went wrong.';
+        box.innerHTML += `<div class="chat-msg ai-msg"><div class="msg-bubble">${text.replace(/\n/g,'<br/>')}</div></div>`;
+      } catch(e) {
+        document.getElementById('typing')?.remove();
+        box.innerHTML += `<div class="chat-msg ai-msg"><div class="msg-bubble">⚠️ Connection error. Please try again.</div></div>`;
+      }
+      box.scrollTop = box.scrollHeight;
+    }
+  </script>
+</body>
+</html>

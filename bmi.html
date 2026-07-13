@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BMI Calculator — FitVerse AI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+</head>
+<body class="fitverse-body">
+
+  <nav class="navbar navbar-expand-lg navbar-dark fitverse-nav sticky-top">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand brand-logo" href="/">
+        <span class="brand-icon"><i class="fas fa-dumbbell"></i></span>
+        FitVerse <span class="brand-ai">AI</span>
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+          <li class="nav-item"><a class="nav-link nav-pill" href="/"><i class="bi bi-house-door me-1"></i>Home</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/dashboard"><i class="bi bi-grid me-1"></i>Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/nutrition"><i class="bi bi-apple me-1"></i>Nutrition</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/meals"><i class="bi bi-egg-fried me-1"></i>Meal Plans</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/workout"><i class="fas fa-dumbbell me-1"></i>Workouts</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill active" href="/bmi"><i class="bi bi-graph-up-arrow me-1"></i>BMI</a></li>
+          {% include '_nav_auth.html' %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="container-fluid px-4">
+      <h1 class="page-title"><i class="bi bi-activity me-2 text-danger"></i>BMI & Health Calculator</h1>
+      <p class="page-sub text-muted-custom mb-0">Calculate your BMI, BMR & TDEE — then get personalized AI advice from IBM Granite.</p>
+    </div>
+  </div>
+
+  <div class="container-fluid px-4 pb-5">
+    <div class="row g-4">
+
+      <!-- Input Form -->
+      <div class="col-lg-4">
+        <div class="glass-card">
+          <div class="card-section-header mb-4">
+            <i class="bi bi-person-fill me-2 text-danger"></i>Your Details
+          </div>
+
+          <!-- Unit Toggle -->
+          <div class="unit-toggle mb-4">
+            <button id="metricBtn" class="unit-btn active" onclick="setUnit('metric')">Metric (kg/cm)</button>
+            <button id="imperialBtn" class="unit-btn" onclick="setUnit('imperial')">Imperial (lbs/in)</button>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-muted-custom small" id="weightLabel">Weight (kg)</label>
+            <div class="input-group-custom">
+              <i class="bi bi-person-fill"></i>
+              <input type="number" id="bmiWeight" class="form-control form-control-dark" placeholder="70" min="1" max="500" />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-muted-custom small" id="heightLabel">Height (cm)</label>
+            <div class="input-group-custom">
+              <i class="bi bi-arrows-vertical"></i>
+              <input type="number" id="bmiHeight" class="form-control form-control-dark" placeholder="175" min="1" max="300" />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-muted-custom small">Age</label>
+            <div class="input-group-custom">
+              <i class="bi bi-calendar3"></i>
+              <input type="number" id="bmiAge" class="form-control form-control-dark" placeholder="25" min="1" max="120" value="25" />
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label text-muted-custom small">Gender</label>
+            <div class="gender-toggle">
+              <label class="gender-option">
+                <input type="radio" name="gender" value="male" checked />
+                <span><i class="bi bi-gender-male"></i> Male</span>
+              </label>
+              <label class="gender-option">
+                <input type="radio" name="gender" value="female" />
+                <span><i class="bi bi-gender-female"></i> Female</span>
+              </label>
+            </div>
+          </div>
+          <button class="btn btn-gradient-danger w-100 btn-lg" onclick="calculateBMI()">
+            <i class="bi bi-calculator me-2"></i>Calculate & Get AI Advice
+          </button>
+        </div>
+
+        <!-- BMI Scale Reference -->
+        <div class="glass-card mt-4">
+          <div class="card-section-header mb-3">
+            <i class="bi bi-info-circle me-2 text-primary-custom"></i>BMI Scale
+          </div>
+          <div class="bmi-scale">
+            {% for label, range_, color in [
+              ('Underweight','< 18.5','#60a5fa'),
+              ('Normal','18.5 – 24.9','#34d399'),
+              ('Overweight','25 – 29.9','#fbbf24'),
+              ('Obese','≥ 30','#f87171'),
+            ] %}
+            <div class="bmi-scale-item">
+              <div class="bmi-dot" style="background:{{ color }}"></div>
+              <div class="flex-grow-1">
+                <div class="fw-semibold small" style="color:{{ color }}">{{ label }}</div>
+                <div class="text-muted-custom" style="font-size:0.75rem">BMI {{ range_ }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="col-lg-8">
+        <!-- Placeholder -->
+        <div id="bmiPlaceholder" class="glass-card text-center py-5">
+          <div class="placeholder-icon"><i class="fas fa-weight-scale"></i></div>
+          <p class="text-muted-custom mt-3">Enter your details and click Calculate</p>
+        </div>
+
+        <!-- Results (hidden initially) -->
+        <div id="bmiResults" style="display:none">
+          <!-- BMI Score Card -->
+          <div class="glass-card mb-4">
+            <div class="row align-items-center g-4">
+              <div class="col-md-4 text-center">
+                <div class="bmi-gauge-wrap">
+                  <canvas id="bmiGauge" width="200" height="200"></canvas>
+                  <div class="bmi-gauge-center">
+                    <div class="bmi-score-big" id="bmiScoreDisplay">--</div>
+                    <div class="bmi-cat-label" id="bmiCatDisplay">—</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-8">
+                <h4 class="fw-bold mb-3">Your Health Metrics</h4>
+                <div class="row g-3">
+                  <div class="col-6"><div class="metric-box"><div class="metric-val" id="bmrDisplay">—</div><div class="metric-label">BMR (kcal/day)</div></div></div>
+                  <div class="col-6"><div class="metric-box"><div class="metric-val" id="tdeeModDisplay">—</div><div class="metric-label">TDEE Moderate</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TDEE Table -->
+          <div class="glass-card mb-4">
+            <div class="card-section-header mb-3">
+              <i class="bi bi-table me-2 text-warning"></i>Daily Calorie Needs (TDEE)
+            </div>
+            <div class="table-responsive">
+              <table class="table table-dark-custom" id="tdeeTable">
+                <thead><tr><th>Activity Level</th><th>Description</th><th>Calories/Day</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- AI Advice -->
+          <div class="glass-card">
+            <div class="card-section-header mb-3">
+              <i class="bi bi-robot me-2 text-primary-custom"></i>IBM Granite AI Recommendations
+            </div>
+            <div id="bmiAdvice" class="result-box result-box-lg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+    let currentUnit = 'metric';
+    let gaugeChart = null;
+
+    function setUnit(u) {
+      currentUnit = u;
+      document.getElementById('metricBtn').classList.toggle('active', u === 'metric');
+      document.getElementById('imperialBtn').classList.toggle('active', u === 'imperial');
+      document.getElementById('weightLabel').textContent = u === 'metric' ? 'Weight (kg)' : 'Weight (lbs)';
+      document.getElementById('heightLabel').textContent = u === 'metric' ? 'Height (cm)' : 'Height (inches)';
+      document.getElementById('bmiWeight').placeholder = u === 'metric' ? '70' : '154';
+      document.getElementById('bmiHeight').placeholder = u === 'metric' ? '175' : '69';
+    }
+
+    function drawGauge(bmi, color) {
+      if (gaugeChart) gaugeChart.destroy();
+      const pct = Math.min(bmi / 40, 1);
+      gaugeChart = new Chart(document.getElementById('bmiGauge'), {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [pct * 100, (1 - pct) * 100],
+            backgroundColor: [color, 'rgba(255,255,255,0.05)'],
+            borderWidth: 0,
+            circumference: 240,
+            rotation: -120,
+          }]
+        },
+        options: { cutout: '75%', plugins: { legend: { display: false }, tooltip: { enabled: false } }, responsive: false }
+      });
+    }
+
+    async function calculateBMI() {
+      const weight = parseFloat(document.getElementById('bmiWeight').value);
+      const height = parseFloat(document.getElementById('bmiHeight').value);
+      const age    = parseInt(document.getElementById('bmiAge').value) || 25;
+      const gender = document.querySelector('input[name="gender"]:checked').value;
+      if (!weight || !height) { alert('Please enter both weight and height.'); return; }
+
+      const btn = document.querySelector('button[onclick="calculateBMI()"]');
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Calculating…';
+      btn.disabled = true;
+
+      const res  = await fetch('/api/bmi-analysis', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({weight, height, age, gender, unit: currentUnit}) });
+      const data = await res.json();
+
+      document.getElementById('bmiPlaceholder').style.display = 'none';
+      document.getElementById('bmiResults').style.display = 'block';
+
+      document.getElementById('bmiScoreDisplay').textContent = data.bmi;
+      document.getElementById('bmiScoreDisplay').style.color = data.color;
+      document.getElementById('bmiCatDisplay').textContent  = data.category;
+      document.getElementById('bmiCatDisplay').style.color  = data.color;
+      document.getElementById('bmrDisplay').textContent     = data.bmr?.toLocaleString() ?? '—';
+      document.getElementById('tdeeModDisplay').textContent = data.tdee?.moderate?.toLocaleString() ?? '—';
+
+      drawGauge(data.bmi, data.color);
+
+      const rows = [
+        ['🛋️ Sedentary', 'Little to no exercise', data.tdee?.sedentary],
+        ['🚶 Light', '1–3 days/week', data.tdee?.light],
+        ['🏃 Moderate', '3–5 days/week', data.tdee?.moderate],
+        ['💪 Active', '6–7 days/week', data.tdee?.active],
+        ['🔥 Very Active', 'Hard training + physical job', data.tdee?.very_active],
+      ];
+      document.querySelector('#tdeeTable tbody').innerHTML = rows.map(([level, desc, cal]) =>
+        `<tr><td>${level}</td><td class="text-muted-custom">${desc}</td><td class="fw-semibold text-warning">${cal?.toLocaleString() ?? '—'} kcal</td></tr>`
+      ).join('');
+
+      document.getElementById('bmiAdvice').innerHTML = (data.advice || '').replace(/\n/g,'<br/>');
+      btn.innerHTML = '<i class="bi bi-calculator me-2"></i>Calculate & Get AI Advice';
+      btn.disabled = false;
+    }
+  </script>
+</body>
+</html>

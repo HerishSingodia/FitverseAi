@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Account — FitVerse AI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+</head>
+<body class="fitverse-body auth-body">
+
+  <div class="auth-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div class="auth-page-wrap">
+
+    <!-- Left brand panel -->
+    <div class="auth-brand-panel d-none d-lg-flex">
+      <div class="auth-brand-inner">
+        <a href="/" class="brand-logo mb-5 text-decoration-none d-inline-flex">
+          <span class="brand-icon"><i class="fas fa-dumbbell"></i></span>
+          FitVerse <span class="brand-ai ms-1">AI</span>
+        </a>
+        <h2 class="auth-brand-headline">Join <span class="gradient-text">50,000+</span><br/>Fitness Achievers</h2>
+        <p class="auth-brand-sub">Create your free account and let IBM Granite AI transform your health journey.</p>
+        <div class="auth-steps-list mt-5">
+          {% for num, title, desc in [
+            ('1','Set Your Goals','Tell us your fitness goal, diet type, and body stats.'),
+            ('2','Get Your AI Plan','IBM Granite builds a personalised plan just for you.'),
+            ('3','Track & Improve','Log meals, check BMI, monitor workouts every day.'),
+          ] %}
+          <div class="auth-step">
+            <div class="auth-step-num">{{ num }}</div>
+            <div><div class="fw-semibold small">{{ title }}</div><div class="text-muted-custom" style="font-size:0.8rem">{{ desc }}</div></div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: register form -->
+    <div class="auth-form-panel">
+      <div class="auth-form-inner register-inner">
+
+        <!-- Mobile logo -->
+        <a href="/" class="brand-logo mb-3 text-decoration-none d-inline-flex d-lg-none">
+          <span class="brand-icon"><i class="fas fa-dumbbell"></i></span>
+          FitVerse <span class="brand-ai ms-1">AI</span>
+        </a>
+
+        <h1 class="auth-form-title">Create your account</h1>
+        <p class="auth-form-sub text-muted-custom mb-4">Free forever · No credit card required</p>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for cat, msg in messages %}
+            <div class="alert auth-alert auth-alert-{{ cat }}" role="alert">
+              <i class="bi bi-{% if cat=='danger' %}exclamation-circle{% elif cat=='success' %}check-circle{% else %}info-circle{% endif %} me-2"></i>{{ msg }}
+            </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/register" id="regForm" novalidate>
+
+          <!-- Step 1: Account Info -->
+          <div class="reg-section-label">Account Information</div>
+          <div class="row g-3 mb-3">
+            <div class="col-12">
+              <div class="auth-field">
+                <label class="auth-label">Full Name</label>
+                <div class="auth-input-wrap">
+                  <i class="bi bi-person-fill auth-input-icon"></i>
+                  <input type="text" name="name" class="form-control auth-input"
+                         placeholder="Alex Johnson" required autocomplete="name" />
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="auth-field">
+                <label class="auth-label">Email Address</label>
+                <div class="auth-input-wrap">
+                  <i class="bi bi-envelope-fill auth-input-icon"></i>
+                  <input type="email" name="email" class="form-control auth-input"
+                         placeholder="you@example.com" required autocomplete="email" />
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="auth-field">
+                <label class="auth-label">Password</label>
+                <div class="auth-input-wrap">
+                  <i class="bi bi-lock-fill auth-input-icon"></i>
+                  <input type="password" name="password" id="regPw" class="form-control auth-input"
+                         placeholder="Min. 6 characters" required autocomplete="new-password"
+                         oninput="checkStrength(this.value)" />
+                  <button type="button" class="auth-pw-toggle" onclick="togglePw('regPw','regPwEye')">
+                    <i class="bi bi-eye" id="regPwEye"></i>
+                  </button>
+                </div>
+                <div class="pw-strength-bar mt-2" id="pwStrengthBar">
+                  <div class="pw-strength-fill" id="pwStrengthFill"></div>
+                </div>
+                <div class="pw-strength-label" id="pwStrengthLabel"></div>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="auth-field">
+                <label class="auth-label">Confirm Password</label>
+                <div class="auth-input-wrap">
+                  <i class="bi bi-lock-fill auth-input-icon"></i>
+                  <input type="password" name="confirm" id="regPwConfirm" class="form-control auth-input"
+                         placeholder="Repeat password" required autocomplete="new-password" />
+                  <button type="button" class="auth-pw-toggle" onclick="togglePw('regPwConfirm','regConfirmEye')">
+                    <i class="bi bi-eye" id="regConfirmEye"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Body Stats -->
+          <div class="reg-section-label">Body & Fitness Profile</div>
+          <div class="row g-3 mb-3">
+            <div class="col-sm-4">
+              <div class="auth-field">
+                <label class="auth-label">Age</label>
+                <div class="auth-input-wrap">
+                  <i class="bi bi-calendar3 auth-input-icon"></i>
+                  <input type="number" name="age" class="form-control auth-input"
+                         placeholder="25" min="13" max="100" />
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-4">
+              <div class="auth-field">
+                <label class="auth-label">Weight (kg)</label>
+                <div class="auth-input-wrap">
+                  <i class="bi bi-person auth-input-icon"></i>
+                  <input type="number" name="weight" class="form-control auth-input"
+                         placeholder="70" min="30" max="300" step="0.1" />
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-4">
+              <div class="auth-field">
+                <label class="auth-label">Height (cm)</label>
+                <div class="auth-input-wrap">
+                  <i class="bi bi-arrows-vertical auth-input-icon"></i>
+                  <input type="number" name="height" class="form-control auth-input"
+                         placeholder="175" min="100" max="250" />
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="auth-field">
+                <label class="auth-label">Gender</label>
+                <div class="gender-toggle">
+                  <label class="gender-option">
+                    <input type="radio" name="gender" value="male" checked />
+                    <span><i class="bi bi-gender-male"></i> Male</span>
+                  </label>
+                  <label class="gender-option">
+                    <input type="radio" name="gender" value="female" />
+                    <span><i class="bi bi-gender-female"></i> Female</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="auth-field">
+                <label class="auth-label">Activity Level</label>
+                <select name="activity" class="form-select form-select-dark">
+                  <option value="sedentary">Sedentary</option>
+                  <option value="light">Lightly Active</option>
+                  <option value="moderate" selected>Moderately Active</option>
+                  <option value="active">Very Active</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="auth-field">
+                <label class="auth-label">Primary Fitness Goal</label>
+                <div class="goal-grid">
+                  {% for val, label, icon in [
+                    ('weight loss','Weight Loss','bi bi-arrow-down-circle'),
+                    ('muscle gain','Muscle Gain','bi bi-lightning-charge'),
+                    ('maintenance','Maintenance','bi bi-subtract'),
+                    ('endurance','Endurance','bi bi-heart-pulse'),
+                  ] %}
+                  <label class="goal-chip">
+                    <input type="radio" name="goal" value="{{ val }}" {% if loop.first %}checked{% endif %} />
+                    <span><i class="{{ icon }} me-1"></i>{{ label }}</span>
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Terms -->
+          <div class="auth-field mb-4">
+            <div class="auth-checkbox">
+              <input type="checkbox" id="terms" required />
+              <label for="terms" class="auth-checkbox-label">
+                I agree to the <a href="#" class="auth-switch-link">Terms of Service</a> and
+                <a href="#" class="auth-switch-link">Privacy Policy</a>
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-gradient-primary w-100 auth-submit-btn" id="regSubmitBtn">
+            <i class="fas fa-rocket me-2"></i>Create My Free Account
+          </button>
+
+        </form>
+
+        <p class="text-center auth-switch-text mt-3">
+          Already have an account?
+          <a href="/login" class="auth-switch-link">Sign in</a>
+        </p>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function togglePw(inputId, iconId) {
+      const inp = document.getElementById(inputId);
+      const ico = document.getElementById(iconId);
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      ico.className = inp.type === 'text' ? 'bi bi-eye-slash' : 'bi bi-eye';
+    }
+
+    function checkStrength(pw) {
+      const fill  = document.getElementById('pwStrengthFill');
+      const label = document.getElementById('pwStrengthLabel');
+      let score = 0;
+      if (pw.length >= 6)  score++;
+      if (pw.length >= 10) score++;
+      if (/[A-Z]/.test(pw)) score++;
+      if (/[0-9]/.test(pw)) score++;
+      if (/[^A-Za-z0-9]/.test(pw)) score++;
+      const levels = [
+        { pct:'20%', color:'#ef4444', text:'Very weak'  },
+        { pct:'40%', color:'#f97316', text:'Weak'       },
+        { pct:'60%', color:'#f59e0b', text:'Fair'       },
+        { pct:'80%', color:'#84cc16', text:'Strong'     },
+        { pct:'100%',color:'#10b981', text:'Very strong'},
+      ];
+      const l = levels[Math.max(0, score - 1)] || levels[0];
+      fill.style.width = l.pct;
+      fill.style.background = l.color;
+      label.textContent = pw.length > 0 ? l.text : '';
+      label.style.color = l.color;
+    }
+
+    document.getElementById('regForm').addEventListener('submit', function(e) {
+      const terms = document.getElementById('terms');
+      if (!terms.checked) {
+        e.preventDefault();
+        alert('Please agree to the Terms of Service to continue.');
+        return;
+      }
+      const pw  = document.getElementById('regPw').value;
+      const cfw = document.getElementById('regPwConfirm').value;
+      if (pw !== cfw) {
+        e.preventDefault();
+        alert('Passwords do not match.');
+        return;
+      }
+      const btn = document.getElementById('regSubmitBtn');
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating account…';
+      btn.disabled = true;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meal Planner — FitVerse AI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet" />
+</head>
+<body class="fitverse-body">
+
+  <nav class="navbar navbar-expand-lg navbar-dark fitverse-nav sticky-top">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand brand-logo" href="/">
+        <span class="brand-icon"><i class="fas fa-dumbbell"></i></span>
+        FitVerse <span class="brand-ai">AI</span>
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+          <li class="nav-item"><a class="nav-link nav-pill" href="/"><i class="bi bi-house-door me-1"></i>Home</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/dashboard"><i class="bi bi-grid me-1"></i>Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/nutrition"><i class="bi bi-apple me-1"></i>Nutrition</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill active" href="/meals"><i class="bi bi-egg-fried me-1"></i>Meal Plans</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/workout"><i class="fas fa-dumbbell me-1"></i>Workouts</a></li>
+          <li class="nav-item"><a class="nav-link nav-pill" href="/bmi"><i class="bi bi-graph-up-arrow me-1"></i>BMI</a></li>
+          {% include '_nav_auth.html' %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="container-fluid px-4">
+      <h1 class="page-title"><i class="bi bi-calendar3 me-2 text-warning"></i>AI Meal Planner</h1>
+      <p class="page-sub text-muted-custom mb-0">Generate a personalized 7-day meal plan with IBM Granite AI in seconds.</p>
+    </div>
+  </div>
+
+  <div class="container-fluid px-4 pb-5">
+    <div class="row g-4">
+
+      <!-- Preferences Form -->
+      <div class="col-lg-4">
+        <div class="glass-card">
+          <div class="card-section-header mb-4">
+            <i class="bi bi-sliders me-2 text-warning"></i>Your Preferences
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-muted-custom small">Primary Goal</label>
+            <select id="mpGoal" class="form-select form-select-dark">
+              <option value="weight loss">Weight Loss</option>
+              <option value="muscle gain" selected>Muscle Gain</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="endurance">Athletic Performance</option>
+              <option value="heart health">Heart Health</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-muted-custom small">Daily Calories Target</label>
+            <input type="range" id="mpCalSlider" class="form-range range-custom" min="1200" max="4000" step="50" value="2000" oninput="document.getElementById('mpCalVal').textContent=this.value" />
+            <div class="d-flex justify-content-between small text-muted-custom mt-1">
+              <span>1,200</span><span class="fw-semibold text-warning" id="mpCalVal">2,000</span><span>4,000</span>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-muted-custom small">Diet Type</label>
+            <select id="mpDiet" class="form-select form-select-dark">
+              <option value="balanced" selected>Balanced</option>
+              <option value="high protein">High Protein</option>
+              <option value="low carb">Low Carb / Keto</option>
+              <option value="vegan">Vegan</option>
+              <option value="vegetarian">Vegetarian</option>
+              <option value="mediterranean">Mediterranean</option>
+              <option value="paleo">Paleo</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="form-label text-muted-custom small">Allergies / Restrictions</label>
+            <input type="text" id="mpAllergies" class="form-control form-control-dark" placeholder="e.g. nuts, dairy, gluten…" />
+          </div>
+          <button class="btn btn-gradient-warning w-100 btn-lg" onclick="generateMealPlan()">
+            <i class="bi bi-stars me-2"></i>Generate 7-Day Plan
+          </button>
+        </div>
+
+        <!-- Plan Highlights -->
+        <div class="glass-card mt-4">
+          <div class="card-section-header mb-3">
+            <i class="bi bi-info-circle me-2 text-primary-custom"></i>Plan Highlights
+          </div>
+          <div id="planHighlights" class="highlights-placeholder">
+            <div class="highlight-item">
+              <i class="bi bi-check-circle-fill text-success-custom"></i>
+              <span>Personalized to your goals</span>
+            </div>
+            <div class="highlight-item">
+              <i class="bi bi-check-circle-fill text-success-custom"></i>
+              <span>Balanced macronutrients</span>
+            </div>
+            <div class="highlight-item">
+              <i class="bi bi-check-circle-fill text-success-custom"></i>
+              <span>Shopping list included</span>
+            </div>
+            <div class="highlight-item">
+              <i class="bi bi-check-circle-fill text-success-custom"></i>
+              <span>Calorie-counted meals</span>
+            </div>
+            <div class="highlight-item">
+              <i class="bi bi-check-circle-fill text-success-custom"></i>
+              <span>Allergy-safe options</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Meal Plan Output -->
+      <div class="col-lg-8">
+        <div class="glass-card min-vh-50">
+          <div class="d-flex align-items-center justify-content-between mb-4">
+            <div class="card-section-header mb-0">
+              <i class="bi bi-calendar-week me-2 text-warning"></i>Your 7-Day Meal Plan
+            </div>
+            <button id="copyPlanBtn" class="btn btn-glass btn-sm" onclick="copyPlan()" style="display:none">
+              <i class="bi bi-clipboard me-1"></i>Copy
+            </button>
+          </div>
+          <div id="mealPlanPlaceholder" class="text-center py-5">
+            <div class="placeholder-icon"><i class="fas fa-calendar-alt"></i></div>
+            <p class="text-muted-custom mt-3">Set your preferences and generate your personalized plan</p>
+          </div>
+          <div id="mealPlanResult" class="result-box result-box-lg" style="display:none"></div>
+        </div>
+
+        <!-- Sample Meal Cards -->
+        <div class="row g-3 mt-0" id="sampleMeals">
+          {% for emoji, name, cal, tag, color in [
+            ('🥗','Grilled Chicken Salad','450 kcal','High Protein','#10b981'),
+            ('🥞','Overnight Oats Bowl','380 kcal','Fiber Rich','#f59e0b'),
+            ('🐟','Baked Salmon & Veggies','520 kcal','Omega-3','#6366f1'),
+            ('🫙','Greek Yogurt Parfait','320 kcal','Probiotic','#06b6d4'),
+          ] %}
+          <div class="col-md-6">
+            <div class="meal-card glass-card">
+              <div class="meal-emoji">{{ emoji }}</div>
+              <div class="flex-grow-1">
+                <div class="meal-name fw-semibold">{{ name }}</div>
+                <div class="meal-cal text-muted-custom small">{{ cal }}</div>
+              </div>
+              <span class="meal-tag" style="color:{{ color }};background:{{ color }}20">{{ tag }}</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+    async function generateMealPlan() {
+      const btn = document.querySelector('button[onclick="generateMealPlan()"]');
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating your plan…';
+      btn.disabled = true;
+      const payload = {
+        preferences: {
+          goal:      document.getElementById('mpGoal').value,
+          calories:  parseInt(document.getElementById('mpCalSlider').value),
+          diet:      document.getElementById('mpDiet').value,
+          allergies: document.getElementById('mpAllergies').value || 'none',
+        }
+      };
+      const res  = await fetch('/api/meal-plan', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const data = await res.json();
+      document.getElementById('mealPlanPlaceholder').style.display = 'none';
+      const el = document.getElementById('mealPlanResult');
+      el.style.display = 'block';
+      el.innerHTML = (data.plan || '').replace(/\n/g,'<br/>');
+      document.getElementById('copyPlanBtn').style.display = 'inline-flex';
+      document.getElementById('sampleMeals').style.display = 'none';
+      btn.innerHTML = '<i class="bi bi-stars me-2"></i>Generate 7-Day Plan';
+      btn.disabled = false;
+    }
+
+    function copyPlan() {
+      const text = document.getElementById('mealPlanResult').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copyPlanBtn');
+        btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Copied!';
+        setTimeout(() => btn.innerHTML = '<i class="bi bi-clipboard me-1"></i>Copy', 2000);
+      });
+    }
+  </script>
+</body>
+</html>
