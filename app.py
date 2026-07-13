@@ -1,12 +1,10 @@
 import os
-import json
-import re
-import hashlib
 import uuid
 from datetime import datetime
 from functools import wraps
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
+from werkzeug.security import generate_password_hash, check_password_hash
 from ibm_watsonx_ai import APIClient, Credentials
 from ibm_watsonx_ai.foundation_models import ModelInference
 from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
@@ -23,7 +21,10 @@ USERS: dict = {}
 
 # ─── Auth helpers ─────────────────────────────────────────────────────────────
 def _hash(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+    return generate_password_hash(password)
+
+def _verify(password: str, password_hash: str) -> bool:
+    return check_password_hash(password_hash, password)
 
 def login_required(f):
     @wraps(f)
@@ -55,8 +56,16 @@ REGION_URLS = {
 }
 IBM_URL = REGION_URLS.get(IBM_REGION, "https://us-south.ml.cloud.ibm.com")
 
+_DEMO_KEYS = {"", "your_ibm_api_key_here", "demo"}
+_IS_DEMO_MODE = (not IBM_API_KEY) or (IBM_API_KEY.strip() in _DEMO_KEYS) or (not IBM_PROJECT_ID) or (IBM_PROJECT_ID.strip() in _DEMO_KEYS)
+
+if _IS_DEMO_MODE:
+    print("[FitVerse AI] No valid IBM_API_KEY / IBM_PROJECT_ID found — running in DEMO mode (canned responses).")
+else:
+    print(f"[FitVerse AI] IBM credentials detected — calling watsonx.ai in region '{IBM_REGION}' ({IBM_URL}).")
+
 # ─── watsonx Model Helper ──────────────────────────────────────────────────────
-def get_watsonx_model(model_id: str = "ibm/granite-13b-instruct-v2") -> ModelInference:
+def get_watsonx_model(model_id: str = "ibm/granite-3-3-8b-instruct") -> ModelInference:
     credentials = Credentials(
         url=IBM_URL,
         api_key=IBM_API_KEY,
@@ -78,18 +87,24 @@ def get_watsonx_model(model_id: str = "ibm/granite-13b-instruct-v2") -> ModelInf
     return model
 
 
-def ask_granite(prompt: str, model_id: str = "ibm/granite-13b-instruct-v2") -> str:
-    """Send a prompt to IBM Granite and return the generated text."""
-    demo_keys = {"", "your_ibm_api_key_here", "demo"}
-    if not IBM_API_KEY or IBM_API_KEY.strip() in demo_keys:
-        return _demo_response(prompt)
+def ask_granite(prompt: str, model_id: str = "ibm/granite-3-3-8b-instruct") -> tuple[str, str]:
+    """Send a prompt to IBM Granite. Returns (text, engine) where engine is
+    'watsonx' on a real model response or 'demo' if it fell back."""
+    if _IS_DEMO_MODE:
+        return _demo_response(prompt), "demo"
     try:
         model = get_watsonx_model(model_id)
         result = model.generate_text(prompt=prompt)
-        return result.strip() if isinstance(result, str) else result.get("results", [{}])[0].get("generated_text", "").strip()
+        text = result.strip() if isinstance(result, str) else result.get("results", [{}])[0].get("generated_text", "").strip()
+        if not text:
+            raise ValueError("watsonx returned an empty completion")
+        return text, "watsonx"
     except Exception as exc:
-        app.logger.error("watsonx error: %s", exc)
-        return _demo_response(prompt)
+        # Loud, specific logging so failures are never silently invisible.
+        app.logger.error("watsonx call failed (model_id=%s): %s: %s", model_id, type(exc).__name__, exc)
+        print(f"[FitVerse AI] watsonx call FAILED — falling back to demo response. "
+              f"model_id={model_id!r} error={type(exc).__name__}: {exc}")
+        return _demo_response(prompt), "demo"
 
 
 def _demo_response(prompt: str) -> str:
@@ -266,7 +281,7 @@ def login():
         password = request.form.get("password", "")
         remember = request.form.get("remember")
         user     = USERS.get(email)
-        if not user or user["password_hash"] != _hash(password):
+        if not user or not _verify(password, user["password_hash"]):
             flash("Invalid email or password.", "danger")
             return render_template("login.html")
         session["user_email"] = email
@@ -345,8 +360,8 @@ def api_chat():
         "Format responses with clear sections and bullet points.\n\n"
         f"User: {message}\n\nFitVerse AI:"
     )
-    reply = ask_granite(prompt)
-    return jsonify({"response": reply, "status": "success"})
+    reply, engine = ask_granite(prompt)
+    return jsonify({"response": reply, "status": "success", "engine": engine})
 
 
 @app.route("/api/analyze-calories", methods=["POST"])
@@ -362,8 +377,8 @@ def api_analyze_calories():
         f"Food items: {food_items}\n\n"
         "Provide a structured breakdown with total calories, macros, and health tips:"
     )
-    analysis = ask_granite(prompt)
-    return jsonify({"analysis": analysis, "status": "success"})
+    analysis, engine = ask_granite(prompt)
+    return jsonify({"analysis": analysis, "status": "success", "engine": engine})
 
 
 @app.route("/api/meal-plan", methods=["POST"])
@@ -383,8 +398,8 @@ def api_meal_plan():
         f"• Allergies/restrictions: {allergies}\n\n"
         "Include breakfast, lunch, dinner, and snacks for each day with calorie counts:"
     )
-    plan = ask_granite(prompt)
-    return jsonify({"plan": plan, "status": "success"})
+    plan, engine = ask_granite(prompt)
+    return jsonify({"plan": plan, "status": "success", "engine": engine})
 
 
 @app.route("/api/bmi-analysis", methods=["POST"])
@@ -435,7 +450,7 @@ def api_bmi_analysis():
         f"• BMR: {bmr:.0f} kcal/day\n\n"
         "Give specific recommendations for diet, exercise, and lifestyle improvements:"
     )
-    advice = ask_granite(prompt)
+    advice, engine = ask_granite(prompt)
 
     return jsonify({
         "bmi":      bmi,
@@ -451,6 +466,7 @@ def api_bmi_analysis():
         },
         "advice":   advice,
         "status":   "success",
+        "engine":   engine,
     })
 
 
@@ -462,8 +478,8 @@ def api_nutrition_tips():
         "Make them specific, actionable, science-backed, and motivating. "
         "Format as a numbered list with brief explanations:"
     )
-    tips = ask_granite(prompt)
-    return jsonify({"tips": tips, "category": category, "status": "success"})
+    tips, engine = ask_granite(prompt)
+    return jsonify({"tips": tips, "category": category, "status": "success", "engine": engine})
 
 
 @app.route("/api/workout-plan", methods=["POST"])
@@ -478,8 +494,8 @@ def api_workout_plan():
         "Include exercise names, sets, reps, rest periods, and calorie estimates. "
         "Make it progressive and achievable:"
     )
-    plan = ask_granite(prompt)
-    return jsonify({"plan": plan, "level": fitness_level, "goal": goal, "status": "success"})
+    plan, engine = ask_granite(prompt)
+    return jsonify({"plan": plan, "level": fitness_level, "goal": goal, "status": "success", "engine": engine})
 
 
 if __name__ == "__main__":
